@@ -1,0 +1,767 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54C45D2E6EAE0D00801746 /* Inputs.swift */; };
+		3D54C4602E6F846900801746 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 3D54C45F2E6F846000801746 /* .gitignore */; };
+		3D782F3F2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */; };
+		3D782F412E6E34BC0053BF4F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F402E6E34BC0053BF4F /* ContentView.swift */; };
+		3D782F432E6E34BE0053BF4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D782F422E6E34BE0053BF4F /* Assets.xcassets */; };
+		3D782F722E6E41B80053BF4F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F712E6E41B20053BF4F /* LoginView.swift */; };
+		3D782F742E6E41D00053BF4F /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F732E6E41CA0053BF4F /* SignupView.swift */; };
+		3D782F762E6E41ED0053BF4F /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F752E6E41E60053BF4F /* ProfileView.swift */; };
+		3D782F782E6E44870053BF4F /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F702E6E405E0053BF4F /* AuthManager.swift */; };
+		3D782F792E6E44D20053BF4F /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F6F2E6E40010053BF4F /* APIService.swift */; };
+		3D782F7A2E6E44D70053BF4F /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F6E2E6E3FA90053BF4F /* SupabaseService.swift */; };
+		3D782F7D2E6E46AB0053BF4F /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F7C2E6E46AB0053BF4F /* Auth */; };
+		3D782F7F2E6E46AB0053BF4F /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F7E2E6E46AB0053BF4F /* Functions */; };
+		3D782F812E6E46AB0053BF4F /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F802E6E46AB0053BF4F /* PostgREST */; };
+		3D782F832E6E46AB0053BF4F /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F822E6E46AB0053BF4F /* Realtime */; };
+		3D782F852E6E46AB0053BF4F /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F842E6E46AB0053BF4F /* Storage */; };
+		3D782F872E6E46AB0053BF4F /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3D782F862E6E46AB0053BF4F /* Supabase */; };
+		3D782F8E2E6E4A340053BF4F /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F6D2E6E3C470053BF4F /* Config.swift */; };
+		3D782F8F2E6E53510053BF4F /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F772E6E42D60053BF4F /* UserProfile.swift */; };
+		3D782F942E6E9F020053BF4F /* WireUserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F932E6E9EF80053BF4F /* WireUserProfile.swift */; };
+		3D782F962E6E9F2A0053BF4F /* WirePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F952E6E9F240053BF4F /* WirePlan.swift */; };
+		3D782F982E6E9F420053BF4F /* MeEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F972E6E9F3B0053BF4F /* MeEnvelope.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3D782F492E6E34BE0053BF4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D782F332E6E34BB0053BF4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D782F3A2E6E34BC0053BF4F;
+			remoteInfo = "voice-gmail-assistant";
+		};
+		3D782F532E6E34BE0053BF4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D782F332E6E34BB0053BF4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D782F3A2E6E34BC0053BF4F;
+			remoteInfo = "voice-gmail-assistant";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		3D54C45D2E6EAE0D00801746 /* Inputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inputs.swift; sourceTree = "<group>"; };
+		3D54C45F2E6F846000801746 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		3D782F3B2E6E34BC0053BF4F /* voice-gmail-assistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "voice-gmail-assistant.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = voice_gmail_assistantApp.swift; sourceTree = "<group>"; };
+		3D782F402E6E34BC0053BF4F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3D782F422E6E34BE0053BF4F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3D782F482E6E34BE0053BF4F /* voice-gmail-assistantTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "voice-gmail-assistantTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D782F522E6E34BE0053BF4F /* voice-gmail-assistantUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "voice-gmail-assistantUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D782F6D2E6E3C470053BF4F /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		3D782F6E2E6E3FA90053BF4F /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		3D782F6F2E6E40010053BF4F /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		3D782F702E6E405E0053BF4F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		3D782F712E6E41B20053BF4F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		3D782F732E6E41CA0053BF4F /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
+		3D782F752E6E41E60053BF4F /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		3D782F772E6E42D60053BF4F /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		3D782F932E6E9EF80053BF4F /* WireUserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireUserProfile.swift; sourceTree = "<group>"; };
+		3D782F952E6E9F240053BF4F /* WirePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WirePlan.swift; sourceTree = "<group>"; };
+		3D782F972E6E9F3B0053BF4F /* MeEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeEnvelope.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3D782F3D2E6E34BC0053BF4F /* voice-gmail-assistant */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "voice-gmail-assistant";
+			sourceTree = "<group>";
+		};
+		3D782F4B2E6E34BE0053BF4F /* voice-gmail-assistantTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "voice-gmail-assistantTests";
+			sourceTree = "<group>";
+		};
+		3D782F552E6E34BE0053BF4F /* voice-gmail-assistantUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "voice-gmail-assistantUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3D782F382E6E34BC0053BF4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D782F812E6E46AB0053BF4F /* PostgREST in Frameworks */,
+				3D782F7F2E6E46AB0053BF4F /* Functions in Frameworks */,
+				3D782F872E6E46AB0053BF4F /* Supabase in Frameworks */,
+				3D782F7D2E6E46AB0053BF4F /* Auth in Frameworks */,
+				3D782F852E6E46AB0053BF4F /* Storage in Frameworks */,
+				3D782F832E6E46AB0053BF4F /* Realtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F452E6E34BE0053BF4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F4F2E6E34BE0053BF4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3D54C45C2E6EAE0300801746 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				3D54C45D2E6EAE0D00801746 /* Inputs.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		3D782F322E6E34BB0053BF4F = {
+			isa = PBXGroup;
+			children = (
+				3D54C45F2E6F846000801746 /* .gitignore */,
+				3D782F6A2E6E3BDD0053BF4F /* Views */,
+				3D782F692E6E3BD30053BF4F /* Utils */,
+				3D782F682E6E3BCC0053BF4F /* Services */,
+				3D782F672E6E3BC30053BF4F /* Models */,
+				3D782F662E6E3BB70053BF4F /* App */,
+				3D782F3D2E6E34BC0053BF4F /* voice-gmail-assistant */,
+				3D782F4B2E6E34BE0053BF4F /* voice-gmail-assistantTests */,
+				3D782F552E6E34BE0053BF4F /* voice-gmail-assistantUITests */,
+				3D782F7B2E6E465E0053BF4F /* Frameworks */,
+				3D782F3C2E6E34BC0053BF4F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3D782F3C2E6E34BC0053BF4F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F3B2E6E34BC0053BF4F /* voice-gmail-assistant.app */,
+				3D782F482E6E34BE0053BF4F /* voice-gmail-assistantTests.xctest */,
+				3D782F522E6E34BE0053BF4F /* voice-gmail-assistantUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3D782F662E6E3BB70053BF4F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F422E6E34BE0053BF4F /* Assets.xcassets */,
+				3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		3D782F672E6E3BC30053BF4F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F922E6E9EF10053BF4F /* Wire */,
+				3D782F772E6E42D60053BF4F /* UserProfile.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		3D782F682E6E3BCC0053BF4F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F702E6E405E0053BF4F /* AuthManager.swift */,
+				3D782F6F2E6E40010053BF4F /* APIService.swift */,
+				3D782F6E2E6E3FA90053BF4F /* SupabaseService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		3D782F692E6E3BD30053BF4F /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F6D2E6E3C470053BF4F /* Config.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		3D782F6A2E6E3BDD0053BF4F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3D54C45C2E6EAE0300801746 /* Components */,
+				3D782F6C2E6E3BEC0053BF4F /* Profile */,
+				3D782F6B2E6E3BE60053BF4F /* Auth */,
+				3D782F402E6E34BC0053BF4F /* ContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		3D782F6B2E6E3BE60053BF4F /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F732E6E41CA0053BF4F /* SignupView.swift */,
+				3D782F712E6E41B20053BF4F /* LoginView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		3D782F6C2E6E3BEC0053BF4F /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F752E6E41E60053BF4F /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		3D782F7B2E6E465E0053BF4F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3D782F922E6E9EF10053BF4F /* Wire */ = {
+			isa = PBXGroup;
+			children = (
+				3D782F972E6E9F3B0053BF4F /* MeEnvelope.swift */,
+				3D782F952E6E9F240053BF4F /* WirePlan.swift */,
+				3D782F932E6E9EF80053BF4F /* WireUserProfile.swift */,
+			);
+			path = Wire;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3D782F3A2E6E34BC0053BF4F /* voice-gmail-assistant */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D782F5C2E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistant" */;
+			buildPhases = (
+				3D782F372E6E34BC0053BF4F /* Sources */,
+				3D782F382E6E34BC0053BF4F /* Frameworks */,
+				3D782F392E6E34BC0053BF4F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3D782F3D2E6E34BC0053BF4F /* voice-gmail-assistant */,
+			);
+			name = "voice-gmail-assistant";
+			packageProductDependencies = (
+				3D782F7C2E6E46AB0053BF4F /* Auth */,
+				3D782F7E2E6E46AB0053BF4F /* Functions */,
+				3D782F802E6E46AB0053BF4F /* PostgREST */,
+				3D782F822E6E46AB0053BF4F /* Realtime */,
+				3D782F842E6E46AB0053BF4F /* Storage */,
+				3D782F862E6E46AB0053BF4F /* Supabase */,
+			);
+			productName = "voice-gmail-assistant";
+			productReference = 3D782F3B2E6E34BC0053BF4F /* voice-gmail-assistant.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3D782F472E6E34BE0053BF4F /* voice-gmail-assistantTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D782F5F2E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistantTests" */;
+			buildPhases = (
+				3D782F442E6E34BE0053BF4F /* Sources */,
+				3D782F452E6E34BE0053BF4F /* Frameworks */,
+				3D782F462E6E34BE0053BF4F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3D782F4A2E6E34BE0053BF4F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3D782F4B2E6E34BE0053BF4F /* voice-gmail-assistantTests */,
+			);
+			name = "voice-gmail-assistantTests";
+			packageProductDependencies = (
+			);
+			productName = "voice-gmail-assistantTests";
+			productReference = 3D782F482E6E34BE0053BF4F /* voice-gmail-assistantTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		3D782F512E6E34BE0053BF4F /* voice-gmail-assistantUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D782F622E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistantUITests" */;
+			buildPhases = (
+				3D782F4E2E6E34BE0053BF4F /* Sources */,
+				3D782F4F2E6E34BE0053BF4F /* Frameworks */,
+				3D782F502E6E34BE0053BF4F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3D782F542E6E34BE0053BF4F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3D782F552E6E34BE0053BF4F /* voice-gmail-assistantUITests */,
+			);
+			name = "voice-gmail-assistantUITests";
+			packageProductDependencies = (
+			);
+			productName = "voice-gmail-assistantUITests";
+			productReference = 3D782F522E6E34BE0053BF4F /* voice-gmail-assistantUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3D782F332E6E34BB0053BF4F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					3D782F3A2E6E34BC0053BF4F = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					3D782F472E6E34BE0053BF4F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 3D782F3A2E6E34BC0053BF4F;
+					};
+					3D782F512E6E34BE0053BF4F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 3D782F3A2E6E34BC0053BF4F;
+					};
+				};
+			};
+			buildConfigurationList = 3D782F362E6E34BC0053BF4F /* Build configuration list for PBXProject "voice-gmail-assistant" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3D782F322E6E34BB0053BF4F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3D782F3C2E6E34BC0053BF4F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3D782F3A2E6E34BC0053BF4F /* voice-gmail-assistant */,
+				3D782F472E6E34BE0053BF4F /* voice-gmail-assistantTests */,
+				3D782F512E6E34BE0053BF4F /* voice-gmail-assistantUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3D782F392E6E34BC0053BF4F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D54C4602E6F846900801746 /* .gitignore in Resources */,
+				3D782F432E6E34BE0053BF4F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F462E6E34BE0053BF4F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F502E6E34BE0053BF4F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3D782F372E6E34BC0053BF4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D782F942E6E9F020053BF4F /* WireUserProfile.swift in Sources */,
+				3D782F742E6E41D00053BF4F /* SignupView.swift in Sources */,
+				3D782F792E6E44D20053BF4F /* APIService.swift in Sources */,
+				3D782F982E6E9F420053BF4F /* MeEnvelope.swift in Sources */,
+				3D782F8F2E6E53510053BF4F /* UserProfile.swift in Sources */,
+				3D782F8E2E6E4A340053BF4F /* Config.swift in Sources */,
+				3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */,
+				3D782F782E6E44870053BF4F /* AuthManager.swift in Sources */,
+				3D782F722E6E41B80053BF4F /* LoginView.swift in Sources */,
+				3D782F962E6E9F2A0053BF4F /* WirePlan.swift in Sources */,
+				3D782F762E6E41ED0053BF4F /* ProfileView.swift in Sources */,
+				3D782F7A2E6E44D70053BF4F /* SupabaseService.swift in Sources */,
+				3D782F412E6E34BC0053BF4F /* ContentView.swift in Sources */,
+				3D782F3F2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F442E6E34BE0053BF4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D782F4E2E6E34BE0053BF4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3D782F4A2E6E34BE0053BF4F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D782F3A2E6E34BC0053BF4F /* voice-gmail-assistant */;
+			targetProxy = 3D782F492E6E34BE0053BF4F /* PBXContainerItemProxy */;
+		};
+		3D782F542E6E34BE0053BF4F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D782F3A2E6E34BC0053BF4F /* voice-gmail-assistant */;
+			targetProxy = 3D782F532E6E34BE0053BF4F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3D782F5A2E6E34BE0053BF4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		3D782F5B2E6E34BE0053BF4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3D782F5D2E6E34BE0053BF4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistant";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3D782F5E2E6E34BE0053BF4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistant";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		3D782F602E6E34BE0053BF4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistantTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/voice-gmail-assistant.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/voice-gmail-assistant";
+			};
+			name = Debug;
+		};
+		3D782F612E6E34BE0053BF4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistantTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/voice-gmail-assistant.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/voice-gmail-assistant";
+			};
+			name = Release;
+		};
+		3D782F632E6E34BE0053BF4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistantUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "voice-gmail-assistant";
+			};
+			name = Debug;
+		};
+		3D782F642E6E34BE0053BF4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "william.voice-gmail-assistantUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "voice-gmail-assistant";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3D782F362E6E34BC0053BF4F /* Build configuration list for PBXProject "voice-gmail-assistant" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D782F5A2E6E34BE0053BF4F /* Debug */,
+				3D782F5B2E6E34BE0053BF4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D782F5C2E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistant" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D782F5D2E6E34BE0053BF4F /* Debug */,
+				3D782F5E2E6E34BE0053BF4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D782F5F2E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistantTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D782F602E6E34BE0053BF4F /* Debug */,
+				3D782F612E6E34BE0053BF4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D782F622E6E34BE0053BF4F /* Build configuration list for PBXNativeTarget "voice-gmail-assistantUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D782F632E6E34BE0053BF4F /* Debug */,
+				3D782F642E6E34BE0053BF4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3D782F7C2E6E46AB0053BF4F /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		3D782F7E2E6E46AB0053BF4F /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		3D782F802E6E46AB0053BF4F /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		3D782F822E6E46AB0053BF4F /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		3D782F842E6E46AB0053BF4F /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		3D782F862E6E46AB0053BF4F /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D782F652E6E396A0053BF4F /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 3D782F332E6E34BB0053BF4F /* Project object */;
+}

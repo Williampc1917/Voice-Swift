@@ -1,0 +1,41 @@
+//
+//  .gitignore
+//  voice-gmail-assistant
+//
+//  Created by William Pineda on 9/8/25.
+//
+
+# Xcode
+.DS_Store
+build/
+DerivedData/
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.xccheckout
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+
+# Swift Package Manager
+/.build
+/Packages
+/Package.resolved
+
+# CocoaPods
+/Pods
+*.lock
+*.xcworkspace
+
+# Carthage
+/Carthage
+Carthage/Build
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# API Keys / Secrets
+voice-gmail-assistant/Utils/Config.swift
