@@ -58,6 +58,42 @@ final class APIService {
   }
 }
 
+// MARK: - Onboarding Endpoints
+extension APIService {
+    func getOnboardingStatus(accessToken: String) async throws -> WireOnboardingStatus {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/status"))
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                     String(data: data, encoding: .utf8) ?? "")
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(WireOnboardingStatus.self, from: data)
+    }
+
+    func updateProfileName(accessToken: String, displayName: String, timezone: String) async throws -> WireOnboardingProfileUpdateResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/profile"))
+        req.httpMethod = "PUT"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.addValue(timezone, forHTTPHeaderField: "X-Timezone")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body = ["display_name": displayName]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                     String(data: data, encoding: .utf8) ?? "")
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(WireOnboardingProfileUpdateResponse.self, from: data)
+    }
+}
 
 

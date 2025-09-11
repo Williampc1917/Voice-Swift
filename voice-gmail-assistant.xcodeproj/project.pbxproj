@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D371D3A2E712B690093E18F /* OnboardingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D392E712B5C0093E18F /* OnboardingManager.swift */; };
+		3D371D442E7133000093E18F /* WireOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D432E7132FA0093E18F /* WireOnboarding.swift */; };
+		3D371D472E71382A0093E18F /* OnboardingWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */; };
+		3D371D492E71383E0093E18F /* OnboardingProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D482E7138340093E18F /* OnboardingProfileView.swift */; };
+		3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */; };
+		3D371D4D2E7138540093E18F /* OnboardingCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */; };
+		3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */; };
 		3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54C45D2E6EAE0D00801746 /* Inputs.swift */; };
 		3D54C4602E6F846900801746 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 3D54C45F2E6F846000801746 /* .gitignore */; };
 		3D782F3F2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */; };
@@ -49,6 +56,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3D371D392E712B5C0093E18F /* OnboardingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingManager.swift; sourceTree = "<group>"; };
+		3D371D432E7132FA0093E18F /* WireOnboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireOnboarding.swift; sourceTree = "<group>"; };
+		3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWelcomeView.swift; sourceTree = "<group>"; };
+		3D371D482E7138340093E18F /* OnboardingProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProfileView.swift; sourceTree = "<group>"; };
+		3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGmailView.swift; sourceTree = "<group>"; };
+		3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompleteView.swift; sourceTree = "<group>"; };
+		3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
 		3D54C45D2E6EAE0D00801746 /* Inputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inputs.swift; sourceTree = "<group>"; };
 		3D54C45F2E6F846000801746 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		3D782F3B2E6E34BC0053BF4F /* voice-gmail-assistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "voice-gmail-assistant.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +133,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3D371D422E7132F30093E18F /* New Group */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		3D371D452E7138120093E18F /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */,
+				3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */,
+				3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */,
+				3D371D482E7138340093E18F /* OnboardingProfileView.swift */,
+				3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		3D54C45C2E6EAE0300801746 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -175,6 +208,8 @@
 		3D782F682E6E3BCC0053BF4F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				3D371D422E7132F30093E18F /* New Group */,
+				3D371D392E712B5C0093E18F /* OnboardingManager.swift */,
 				3D782F702E6E405E0053BF4F /* AuthManager.swift */,
 				3D782F6F2E6E40010053BF4F /* APIService.swift */,
 				3D782F6E2E6E3FA90053BF4F /* SupabaseService.swift */,
@@ -193,6 +228,7 @@
 		3D782F6A2E6E3BDD0053BF4F /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				3D371D452E7138120093E18F /* Onboarding */,
 				3D54C45C2E6EAE0300801746 /* Components */,
 				3D782F6C2E6E3BEC0053BF4F /* Profile */,
 				3D782F6B2E6E3BE60053BF4F /* Auth */,
@@ -228,6 +264,7 @@
 		3D782F922E6E9EF10053BF4F /* Wire */ = {
 			isa = PBXGroup;
 			children = (
+				3D371D432E7132FA0093E18F /* WireOnboarding.swift */,
 				3D782F972E6E9F3B0053BF4F /* MeEnvelope.swift */,
 				3D782F952E6E9F240053BF4F /* WirePlan.swift */,
 				3D782F932E6E9EF80053BF4F /* WireUserProfile.swift */,
@@ -392,17 +429,24 @@
 			files = (
 				3D782F942E6E9F020053BF4F /* WireUserProfile.swift in Sources */,
 				3D782F742E6E41D00053BF4F /* SignupView.swift in Sources */,
+				3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */,
 				3D782F792E6E44D20053BF4F /* APIService.swift in Sources */,
 				3D782F982E6E9F420053BF4F /* MeEnvelope.swift in Sources */,
 				3D782F8F2E6E53510053BF4F /* UserProfile.swift in Sources */,
+				3D371D4D2E7138540093E18F /* OnboardingCompleteView.swift in Sources */,
 				3D782F8E2E6E4A340053BF4F /* Config.swift in Sources */,
 				3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */,
 				3D782F782E6E44870053BF4F /* AuthManager.swift in Sources */,
 				3D782F722E6E41B80053BF4F /* LoginView.swift in Sources */,
+				3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */,
+				3D371D442E7133000093E18F /* WireOnboarding.swift in Sources */,
 				3D782F962E6E9F2A0053BF4F /* WirePlan.swift in Sources */,
 				3D782F762E6E41ED0053BF4F /* ProfileView.swift in Sources */,
 				3D782F7A2E6E44D70053BF4F /* SupabaseService.swift in Sources */,
+				3D371D492E71383E0093E18F /* OnboardingProfileView.swift in Sources */,
+				3D371D3A2E712B690093E18F /* OnboardingManager.swift in Sources */,
 				3D782F412E6E34BC0053BF4F /* ContentView.swift in Sources */,
+				3D371D472E71382A0093E18F /* OnboardingWelcomeView.swift in Sources */,
 				3D782F3F2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

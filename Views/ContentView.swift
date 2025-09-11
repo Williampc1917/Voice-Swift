@@ -5,22 +5,26 @@
 //  Created by William Pineda on 9/7/25.
 //
 
+//
+//  ContentView.swift
+//  voice-gmail-assistant
+//
+
 import SwiftUI
 
 struct ContentView: View {
   @EnvironmentObject var auth: AuthManager
+  @StateObject private var onboarding = OnboardingManager()
   @State private var showSlowRestore = false
+  @State private var checkedOnboarding = false   // new flag
 
   var body: some View {
     Group {
       if auth.isRestoringSession {
-        // Matches the launch brand color so it looks continuous
+        // Session restore (spinner on gradient)
         ZStack {
-          // Use your app background—if you prefer a plain color, replace with:
-          // Color("LaunchBackground").ignoresSafeArea()
           AppBackground().ignoresSafeArea()
 
-          // Only show a spinner if restore takes unusually long (>2s)
           if showSlowRestore {
             VStack(spacing: 8) {
               ProgressView()
@@ -41,7 +45,31 @@ struct ContentView: View {
         }
 
       } else if auth.isAuthenticated {
-        ProfileView()
+        if !checkedOnboarding {
+          // 👇 FIX: background added here
+          ZStack {
+            AppBackground().ignoresSafeArea()
+
+            VStack(spacing: 8) {
+              ProgressView()
+              Text("Checking your account…")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+          }
+          .task {
+            await onboarding.refreshStatus()
+            checkedOnboarding = true
+          }
+
+        } else if onboarding.needsOnboarding {
+          OnboardingContainerView()
+            .environmentObject(onboarding)
+
+        } else {
+          ProfileView()
+        }
+
       } else {
         LoginView()
       }
@@ -62,5 +90,6 @@ struct ContentView: View {
 }
 
 #Preview {
-  ContentView().environmentObject(AuthManager())
+  ContentView()
+    .environmentObject(AuthManager())
 }
