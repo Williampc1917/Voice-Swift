@@ -22,3 +22,6 @@ struct OnboardingCompleteView: View {
         .padding()
     }
 }
+#Preview {
+    OnboardingCompleteView()
+}

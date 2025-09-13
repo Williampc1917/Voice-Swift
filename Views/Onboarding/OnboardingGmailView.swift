@@ -5,12 +5,6 @@
 //  Created by William Pineda on 9/10/25.
 //
 
-//
-//  OnboardingGmailView.swift
-//  voice-gmail-assistant
-//
-//  Created by William Pineda on 9/10/25.
-//
 import SwiftUI
 
 struct OnboardingGmailView: View {
@@ -32,31 +26,66 @@ struct OnboardingGmailView: View {
           Text("Connect Gmail")
             .font(.title.bold())
 
-          Text("We’re working on Gmail integration. This step isn’t functional yet — you’ll stop here for now.")
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 32)
+          if onboarding.gmailConnected {
+            Text("✅ Your Gmail account is connected!")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .multilineTextAlignment(.center)
+              .padding(.horizontal, 32)
+          } else {
+            Text("Link your Gmail account so you can use voice features to manage email.")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .multilineTextAlignment(.center)
+              .padding(.horizontal, 32)
+          }
         }
 
         Spacer()
 
-        // Disabled/placeholder button
-        Button {
-          // For now: do nothing
-          // Later: will trigger Gmail OAuth → backend → onboarding.complete
-        } label: {
-          Label("Connect Gmail", systemImage: "arrow.right")
-            .fontWeight(.semibold)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+        if onboarding.isLoading {
+          ProgressView()
+            .progressViewStyle(.circular)
+            .padding(.bottom, 40)
+        } else {
+          if onboarding.gmailConnected {
+            Button {
+              Task { await onboarding.disconnectGmail() }
+            } label: {
+              Label("Disconnect Gmail", systemImage: "xmark.circle")
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+
+          } else {
+            Button {
+              Task {
+                // 👇 Kick off OAuth flow
+                await onboarding.startGmailAuth()
+              }
+            } label: {
+              Label("Connect Gmail", systemImage: "arrow.right")
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.primary)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+          }
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.gray) // gray to indicate disabled
-        .disabled(true)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 40)
       }
+    }
+    .alert("Error", isPresented: .constant(onboarding.errorMessage != nil)) {
+      Button("OK") { onboarding.errorMessage = nil }
+    } message: {
+      Text(onboarding.errorMessage ?? "")
     }
   }
 }

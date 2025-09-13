@@ -62,7 +62,7 @@ struct ContentView: View {
             checkedOnboarding = true
           }
 
-        } else if onboarding.needsOnboarding {
+        } else if onboarding.needsOnboarding || onboarding.step == .completed {
           OnboardingContainerView()
             .environmentObject(onboarding)
 
