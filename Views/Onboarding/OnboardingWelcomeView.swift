@@ -5,13 +5,6 @@
 //  Created by William Pineda on 9/10/25.
 //
 
-//
-//  OnboardingWelcomeView.swift
-//  voice-gmail-assistant
-//
-//  Created by William Pineda on 9/10/25.
-//
-
 import SwiftUI
 
 struct OnboardingWelcomeView: View {
@@ -20,18 +13,19 @@ struct OnboardingWelcomeView: View {
 
   var body: some View {
     ZStack {
-      AppBackground()
+      AppBackground() // Design system background
 
-      VStack(spacing: 24) {
+      VStack(spacing: 36) {
         Spacer()
 
-        // App branding
+        // App branding with white text
         VStack(spacing: 12) {
-          Image(systemName: "waveform") // could also try "mic.fill"
+          Image(systemName: "waveform")
             .font(.system(size: 56, weight: .semibold))
             .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(AppTheme.primary)
-            .scaleEffect(animate ? 1.1 : 1.0) // breathing effect
+            .foregroundColor(.blue)
+            .scaleEffect(animate ? 1.1 : 1.0)
+            .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
             .animation(
               .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
               value: animate
@@ -40,30 +34,27 @@ struct OnboardingWelcomeView: View {
 
           Text("Welcome")
             .font(.largeTitle.bold())
+            .foregroundColor(.white)
             .multilineTextAlignment(.center)
 
-          Text("Your voice, your inbox — let’s get started.")
+          Text("Your voice, your inbox — let's get started.")
             .font(.callout)
-            .foregroundStyle(.secondary)
+            .foregroundColor(.white.opacity(0.85))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 32)
         }
 
         Spacer()
 
-        // Continue button
+        // Continue button using design system
         Button {
           onboarding.step = .profile
         } label: {
           Label("Get Started", systemImage: "arrow.right")
-            .fontWeight(.semibold)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(AppTheme.primary)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 40)
+        .appButtonStyle()
+        .padding(.horizontal, 24)
+        .padding(.bottom, 44)
       }
     }
   }

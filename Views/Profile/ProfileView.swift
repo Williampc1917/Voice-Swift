@@ -12,15 +12,15 @@ struct ProfileView: View {
 
   var body: some View {
     ZStack {
-      AppBackground() // Dark professional gradient
+      AppBackground() // FROM DESIGN SYSTEM
 
       VStack(spacing: 36) {
         Spacer()
 
         if let p = auth.profile {
-          // Profile Card with OnboardingProfileView styling
+          // Profile content using design system
           VStack(spacing: 20) {
-            // Avatar with improved styling
+            // Avatar
             Circle()
               .fill(Color.white.opacity(0.1))
               .frame(width: 80, height: 80)
@@ -33,7 +33,6 @@ struct ProfileView: View {
                 Circle()
                   .strokeBorder(Color.white.opacity(0.2), lineWidth: 2)
               )
-              .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
 
             VStack(spacing: 8) {
               Text(p.displayName?.isEmpty == false ? p.displayName! : "User")
@@ -58,45 +57,26 @@ struct ProfileView: View {
                           .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
                       )
                   )
-                  .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
               }
             }
           }
-          .padding(24)
-          .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-              .fill(Color.white.opacity(0.05))
-              .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                  .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-              )
-          )
-          .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+          .appCardStyle() // FROM DESIGN SYSTEM
           .padding(.horizontal, 24)
-          .transition(.scale.combined(with: .opacity))
 
           Spacer()
 
-          // Sign out button with OnboardingProfileView styling
+          // Sign out button using design system
           Button {
             auth.signOut()
           } label: {
             Text("Sign Out")
-              .font(.system(size: 18, weight: .semibold))
-              .frame(maxWidth: .infinity)
-              .padding(.vertical, 16)
           }
-          .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-              .fill(Color.blue)
-              .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
-          )
-          .foregroundColor(.white)
+          .appButtonStyle() // FROM DESIGN SYSTEM
           .padding(.horizontal, 24)
           .padding(.bottom, 44)
 
         } else {
-          // Loading state with OnboardingProfileView styling
+          // Loading state using design system
           VStack(spacing: 20) {
             ProgressView()
               .scaleEffect(1.2)
@@ -106,16 +86,7 @@ struct ProfileView: View {
               .font(.callout)
               .foregroundColor(.white.opacity(0.85))
           }
-          .padding(24)
-          .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-              .fill(Color.white.opacity(0.05))
-              .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                  .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-              )
-          )
-          .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+          .appCardStyle() // FROM DESIGN SYSTEM
           .padding(.horizontal, 24)
           .task { try? await auth.fetchProfile() }
         }

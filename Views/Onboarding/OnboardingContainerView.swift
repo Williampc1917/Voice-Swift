@@ -4,6 +4,7 @@
 //
 //  Created by William Pineda on 9/10/25.
 //
+
 import SwiftUI
 
 struct OnboardingContainerView: View {
@@ -15,7 +16,7 @@ struct OnboardingContainerView: View {
     
     var body: some View {
         ZStack {
-            AppBackground().ignoresSafeArea()
+            AppBackground() // Design system background
             
             // Step content with smooth transitions
             Group {
@@ -53,7 +54,7 @@ struct OnboardingContainerView: View {
             }
             .animation(.easeInOut(duration: 0.5), value: onboarding.step)
             
-            // Progress indicator - updated for 3 steps instead of 4
+            // Progress indicator with white text
             VStack {
                 HStack {
                     Spacer()
@@ -72,7 +73,7 @@ struct OnboardingContainerView: View {
     }
 }
 
-// MARK: - Updated Progress Indicator
+// MARK: - Updated Progress Indicator with Design System
 struct OnboardingProgressView: View {
     let currentStep: OnboardingStep
     
@@ -94,20 +95,28 @@ struct OnboardingProgressView: View {
     
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            // Step counter - now out of 3 instead of 4
+            // Step counter with white text
             Text("\(stepNumber)/3")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.85))
             
             // Progress bar
             ProgressView(value: progress)
-                .progressViewStyle(LinearProgressViewStyle(tint: AppTheme.primary))
+                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
                 .frame(width: 80)
                 .scaleEffect(y: 0.5)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.05))
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
         .animation(.easeInOut(duration: 0.3), value: progress)
     }
 }

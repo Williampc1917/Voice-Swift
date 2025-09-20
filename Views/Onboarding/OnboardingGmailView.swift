@@ -9,39 +9,40 @@ import SwiftUI
 struct OnboardingGmailView: View {
     @EnvironmentObject var onboarding: OnboardingManager
     
-    // New: Auto-polling state
+    // Auto-polling state
     @State private var isAutoPolling = false
     @State private var pollAttempts = 0
     @State private var showPollingUI = false
     
     var body: some View {
         ZStack {
-            AppBackground()
+            AppBackground() // Design system background
 
-            VStack(spacing: 24) {
+            VStack(spacing: 36) {
                 Spacer()
 
-                // Header
+                // Header with white text
                 VStack(spacing: 12) {
-                    // Updated icon to represent both email and calendar
                     HStack(spacing: 8) {
                         Image(systemName: "envelope.badge")
                             .font(.system(size: 48, weight: .semibold))
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(AppTheme.primary)
+                            .foregroundColor(.blue)
                         
                         Image(systemName: "calendar")
                             .font(.system(size: 48, weight: .semibold))
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(AppTheme.primary)
+                            .foregroundColor(.blue)
                     }
+                    .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
 
                     Text("Connect Google Services")
                         .font(.title.bold())
+                        .foregroundColor(.white)
 
                     Text("Link your Gmail and Google Calendar so you can use voice commands to manage email and schedule events.")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
                 }
@@ -56,15 +57,16 @@ struct OnboardingGmailView: View {
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.2)
+                                .tint(.blue)
                             
                             VStack(spacing: 8) {
                                 Text("Waiting for Google connection...")
                                     .font(.callout)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundColor(.white.opacity(0.85))
                                 
                                 Text("This usually takes a few seconds")
                                     .font(.footnote)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundColor(.white.opacity(0.6))
                             }
                             
                             // Option to manually refresh if auto-polling is taking too long
@@ -78,12 +80,20 @@ struct OnboardingGmailView: View {
                                 } label: {
                                     Label("Check Again", systemImage: "arrow.clockwise")
                                         .font(.footnote)
+                                        .foregroundColor(.white.opacity(0.85))
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 16)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                                        )
                                 }
-                                .buttonStyle(.bordered)
-                                .tint(.secondary)
+                                .buttonStyle(.plain)
                             }
                         }
-                        .padding(.bottom, 40)
+                        .appCardStyle()
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 44)
                     }
                     
                     // Processing state (when OAuth is completing in background)
@@ -91,78 +101,69 @@ struct OnboardingGmailView: View {
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.2)
+                                .tint(.blue)
                             
                             Text("Completing Google connection...")
                                 .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(.white.opacity(0.85))
                         }
-                        .padding(.bottom, 40)
+                        .appCardStyle()
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 44)
                     }
                     
                     // Success state (Gmail connected successfully)
                     else if onboarding.gmailConnected && onboarding.errorMessage == nil {
                         VStack(spacing: 20) {
-                            // Success card
+                            // Success message
                             VStack(spacing: 16) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 48))
-                                    .foregroundStyle(.green)
+                                    .foregroundColor(.green)
+                                    .shadow(color: Color.green.opacity(0.3), radius: 8, y: 4)
                                 
                                 Text("Google Services Connected!")
                                     .font(.headline)
                                     .foregroundColor(.green)
                                     .multilineTextAlignment(.center)
                                 
-                                Text("You can now use voice commands to manage your email and calendar.")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
                             }
                             .appCardStyle()
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 24)
                             
-                            // Continue button - goes directly to ProfileView
+                            // Continue button using design system
                             Button {
                                 Task {
-                                    // Direct transition to ProfileView
                                     onboarding.needsOnboarding = false
                                 }
                             } label: {
                                 if onboarding.isLoading {
                                     ProgressView()
                                         .tint(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 } else {
                                     Label("Continue to App", systemImage: "arrow.right")
-                                        .fontWeight(.semibold)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 }
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.green)
-                            .disabled(onboarding.isLoading)
-                            .padding(.horizontal, 20)
+                            .appButtonStyle(disabled: onboarding.isLoading)
+                            .padding(.horizontal, 24)
                             
                             // Optional: Disconnect option
-                            Button("Disconnect Google Services") {
-                                Task { await onboarding.disconnectGmail() }
-                            }
+                            
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(.white.opacity(0.6))
+                            .padding(.bottom, 44)
                         }
-                        .padding(.bottom, 40)
                     }
                     
                     // Error state (connection failed)
                     else if let error = onboarding.errorMessage {
                         VStack(spacing: 20) {
-                            // Error card
+                            // Error message
                             VStack(spacing: 16) {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 48))
-                                    .foregroundStyle(.orange)
+                                    .foregroundColor(.orange)
+                                    .shadow(color: Color.orange.opacity(0.3), radius: 8, y: 4)
                                 
                                 Text("Connection Failed")
                                     .font(.headline)
@@ -170,74 +171,57 @@ struct OnboardingGmailView: View {
                                 
                                 Text(error)
                                     .font(.callout)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundColor(.white.opacity(0.85))
                                     .multilineTextAlignment(.center)
                             }
                             .appCardStyle()
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 24)
                             
-                            // Try again button
+                            // Try again button using design system
                             Button {
                                 Task { await onboarding.retryGmailConnection() }
                             } label: {
                                 if onboarding.isLoading {
                                     ProgressView()
                                         .tint(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 } else {
                                     Label("Try Again", systemImage: "arrow.clockwise")
-                                        .fontWeight(.semibold)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 }
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.orange)
-                            .disabled(onboarding.isLoading)
-                            .padding(.horizontal, 20)
+                            .appButtonStyle(disabled: onboarding.isLoading)
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 44)
                         }
-                        .padding(.bottom, 40)
                     }
                     
                     // Initial state (ready to connect)
                     else {
-                        VStack(spacing: 16) {
-                            // Main connect button
+                        VStack(spacing: 20) {
+                            // Main connect button using design system
                             Button {
                                 Task {
                                     await onboarding.startGmailAuth()
-                                    // Start auto-polling after initiating OAuth
                                     startAutoPolling()
                                 }
                             } label: {
                                 if onboarding.isLoading {
                                     ProgressView()
                                         .tint(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 } else {
                                     Label("Connect Google Services", systemImage: "arrow.right")
-                                        .fontWeight(.semibold)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
                                 }
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.primary)
-                            .disabled(onboarding.isLoading)
-                            .padding(.horizontal, 20)
+                            .appButtonStyle(disabled: onboarding.isLoading)
+                            .padding(.horizontal, 24)
                             
-                            // Info text with what will be connected
-                            VStack(spacing: 4) {
-                                Text("You'll be redirected to Google to sign in securely")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding(.horizontal, 20)
+                            // Info text
+                            Text("You'll be redirected to Google to sign in securely")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                                .padding(.bottom, 44)
                         }
-                        .padding(.bottom, 40)
                     }
                 }
             }
@@ -247,13 +231,10 @@ struct OnboardingGmailView: View {
             if UserDefaults.standard.string(forKey: "gmail_oauth_state") != nil &&
                !onboarding.isProcessingOAuth &&
                !onboarding.gmailConnected {
-                
-                // Start auto-polling immediately
                 startAutoPolling()
             }
         }
         .onDisappear {
-            // Clean up polling when leaving view
             stopAutoPolling()
         }
     }
@@ -317,7 +298,28 @@ struct OnboardingGmailView: View {
     }
 }
 
-#Preview {
+#Preview("Normal State") {
     OnboardingGmailView()
-        .environmentObject(OnboardingManager())
+        .environmentObject({
+            let mgr = OnboardingManager()
+            // Default state - ready to connect
+            mgr.gmailConnected = false
+            mgr.errorMessage = nil
+            mgr.isLoading = false
+            mgr.isProcessingOAuth = false
+            return mgr
+        }())
 }
+
+//#Preview("Success State") {
+ //   OnboardingGmailView()
+ //       .environmentObject({
+ //           let mgr = OnboardingManager()
+            // Success state - Gmail connected
+ //           mgr.gmailConnected = true
+ //           mgr.errorMessage = nil
+ //           mgr.isLoading = false
+ //           mgr.isProcessingOAuth = false
+ //           return mgr
+ //       }())
+//}

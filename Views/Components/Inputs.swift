@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-// MARK: - Updated Design System with Dark Professional Theme
+// MARK: - Design System (Based on OnboardingProfileView)
 
 public enum AppTheme {
-  public static let primary: Color = .blue // Keep blue as accent
+  public static let primary: Color = .blue
   public static let controlRadius: CGFloat = 12
   public static let cardRadius: CGFloat = 16
 }
 
-// NEW: Dark professional background (same as your loved OnboardingProfileView)
+// MARK: - AppBackground (Dark Professional - matches OnboardingProfileView exactly)
 struct AppBackground: View {
   var body: some View {
     ZStack {
@@ -46,16 +46,16 @@ struct AppBackground: View {
   }
 }
 
-// Updated card style for dark theme
+// MARK: - Card Style (matches OnboardingProfileView exactly)
 struct GlassCard: ViewModifier {
   func body(content: Content) -> some View {
     content
       .padding(18)
       .background(
-        RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous)
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
           .fill(Color.white.opacity(0.05))
           .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
               .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
           )
       )
@@ -63,16 +63,16 @@ struct GlassCard: ViewModifier {
   }
 }
 
-// Updated input style for dark theme
+// MARK: - Input Style (matches OnboardingProfileView exactly)
 struct InputContainer: ViewModifier {
   func body(content: Content) -> some View {
     content
       .padding(12)
       .background(
-        RoundedRectangle(cornerRadius: AppTheme.controlRadius, style: .continuous)
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
           .fill(Color.white.opacity(0.05))
           .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.controlRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
               .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
           )
       )
@@ -80,9 +80,30 @@ struct InputContainer: ViewModifier {
   }
 }
 
+// MARK: - Button Style (matches OnboardingProfileView exactly)
+struct PrimaryButton: ViewModifier {
+  let isDisabled: Bool
+  
+  func body(content: Content) -> some View {
+    content
+      .font(.system(size: 18, weight: .semibold))
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 16)
+      .background(
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+          .fill(Color.blue)
+          .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+      )
+      .foregroundColor(.white)
+      .opacity(isDisabled ? 0.5 : 1)
+  }
+}
+
+// MARK: - View Extensions
 extension View {
   func appCardStyle() -> some View { modifier(GlassCard()) }
   func appInputStyle() -> some View { modifier(InputContainer()) }
+  func appButtonStyle(disabled: Bool = false) -> some View { modifier(PrimaryButton(isDisabled: disabled)) }
 }
 
 // MARK: - Helper modifier for placeholder styling
@@ -99,9 +120,8 @@ extension View {
   }
 }
 
-// MARK: - Dark Theme Input Components
+// MARK: - Input Components
 
-/// Email text field with icon + dark theme styling
 struct LabeledEmailField: View {
   var icon: String = "envelope"
   var placeholder: String = "Email"
@@ -128,7 +148,6 @@ struct LabeledEmailField: View {
   }
 }
 
-/// Password field with eye toggle + dark theme styling
 struct LabeledSecureField: View {
   var icon: String = "key.fill"
   var placeholder: String = "Password"
