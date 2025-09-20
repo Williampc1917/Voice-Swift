@@ -1,17 +1,7 @@
-//
 //  OnboardingProfileView.swift
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/10/25.
-
-
-
-//
-//  OnboardingProfileView.swift
-//  voice-gmail-assistant
-//
-//  Created by William Pineda on 9/10/25.
-//
 
 import SwiftUI
 
@@ -29,12 +19,12 @@ struct OnboardingProfileView: View {
         Spacer()
 
         // Title + subtitle
-        VStack(spacing: 8) {
-          Text("What’s your name?")
+        VStack(spacing: 12) {
+          Text("What should I call you?")
             .font(.title.bold())
             .multilineTextAlignment(.center)
 
-          Text("We’ll personalize your experience.")
+          Text("Your voice assistant will use this name when speaking with you.")
             .font(.callout)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
@@ -43,7 +33,7 @@ struct OnboardingProfileView: View {
 
         // Input card
         VStack(spacing: 14) {
-          TextField("Enter your name", text: $name)
+          TextField("Enter your preferred name", text: $name)
             .textInputAutocapitalization(.words)
             .disableAutocorrection(true)
             .padding(.vertical, 10)

@@ -4,7 +4,6 @@
 //
 //  Created by William Pineda on 9/10/25.
 
-
 import SwiftUI
 
 struct OnboardingGmailView: View {
@@ -24,15 +23,23 @@ struct OnboardingGmailView: View {
 
                 // Header
                 VStack(spacing: 12) {
-                    Image(systemName: "envelope.badge")
-                        .font(.system(size: 56, weight: .semibold))
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(AppTheme.primary)
+                    // Updated icon to represent both email and calendar
+                    HStack(spacing: 8) {
+                        Image(systemName: "envelope.badge")
+                            .font(.system(size: 48, weight: .semibold))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(AppTheme.primary)
+                        
+                        Image(systemName: "calendar")
+                            .font(.system(size: 48, weight: .semibold))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(AppTheme.primary)
+                    }
 
-                    Text("Connect Gmail")
+                    Text("Connect Google Services")
                         .font(.title.bold())
 
-                    Text("Link your Gmail account so you can use voice features to manage email.")
+                    Text("Link your Gmail and Google Calendar so you can use voice commands to manage email and schedule events.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -51,7 +58,7 @@ struct OnboardingGmailView: View {
                                 .scaleEffect(1.2)
                             
                             VStack(spacing: 8) {
-                                Text("Waiting for Gmail connection...")
+                                Text("Waiting for Google connection...")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                                 
@@ -85,7 +92,7 @@ struct OnboardingGmailView: View {
                             ProgressView()
                                 .scaleEffect(1.2)
                             
-                            Text("Completing Gmail connection...")
+                            Text("Completing Google connection...")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                         }
@@ -101,12 +108,12 @@ struct OnboardingGmailView: View {
                                     .font(.system(size: 48))
                                     .foregroundStyle(.green)
                                 
-                                Text("Gmail Connected Successfully!")
+                                Text("Google Services Connected!")
                                     .font(.headline)
                                     .foregroundColor(.green)
                                     .multilineTextAlignment(.center)
                                 
-                                Text("You can now use voice features to manage your email.")
+                                Text("You can now use voice commands to manage your email and calendar.")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -139,7 +146,7 @@ struct OnboardingGmailView: View {
                             .padding(.horizontal, 20)
                             
                             // Optional: Disconnect option
-                            Button("Disconnect Gmail") {
+                            Button("Disconnect Google Services") {
                                 Task { await onboarding.disconnectGmail() }
                             }
                             .font(.footnote)
@@ -210,7 +217,7 @@ struct OnboardingGmailView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 14)
                                 } else {
-                                    Label("Connect Gmail", systemImage: "arrow.right")
+                                    Label("Connect Google Services", systemImage: "arrow.right")
                                         .fontWeight(.semibold)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 14)
@@ -221,12 +228,14 @@ struct OnboardingGmailView: View {
                             .disabled(onboarding.isLoading)
                             .padding(.horizontal, 20)
                             
-                            // Info text
-                            Text("You'll be redirected to Google to sign in securely")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
+                            // Info text with what will be connected
+                            VStack(spacing: 4) {
+                                Text("You'll be redirected to Google to sign in securely")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 20)
                         }
                         .padding(.bottom, 40)
                     }
