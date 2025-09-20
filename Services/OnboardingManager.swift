@@ -2,7 +2,7 @@
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/9/25.
-//
+
 
 import Foundation
 import SwiftUI
@@ -37,9 +37,17 @@ final class OnboardingManager: ObservableObject {
     // Gmail-related
     @Published var gmailConnected: Bool = false
     @Published var gmailState: String?
+    
+    // Polling state
+    @Published var isPollingForCompletion = false
 
     private let supabaseSvc = SupabaseService()
     private let api = APIService()
+    
+    // Polling configuration
+    private let maxPollingAttempts = 10
+    private let initialPollingDelay: TimeInterval = 1.0 // Start with 1 second
+    private let maxPollingDelay: TimeInterval = 8.0   // Cap at 8 seconds
 
     // MARK: - Check onboarding status
     func refreshStatus() async {
@@ -49,7 +57,8 @@ final class OnboardingManager: ObservableObject {
             let status = try await self.api.getOnboardingStatus(accessToken: token)
             self.needsOnboarding = !status.onboardingCompleted
             self.step = OnboardingStep(from: status.step)
-            print("[OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding)")
+            self.gmailConnected = status.gmailConnected
+            print("[OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding), gmailConnected=\(self.gmailConnected)")
         }
     }
 
@@ -96,7 +105,10 @@ final class OnboardingManager: ObservableObject {
 
         print("[OnboardingManager] Found pending Gmail OAuth state=\(state). Attempting to complete…")
 
-        await withLoading {
+        // Set polling state
+        isPollingForCompletion = true
+        
+        do {
             let token = try await self.supabaseSvc.currentAccessToken()
 
             // Step 1: Retrieve data from backend
@@ -114,20 +126,82 @@ final class OnboardingManager: ObservableObject {
             )
             print("[OnboardingManager] Completed OAuth callback. gmailConnected=\(response.gmailConnected)")
 
-            // Step 3: Mark connected
+            // Step 3: Update local Gmail connection state immediately
             self.gmailConnected = response.gmailConnected
+
+            // Step 4: Start polling for backend to complete onboarding
             if response.gmailConnected {
-                print("[OnboardingManager] Gmail connected! Refreshing status…")
-                await self.refreshStatus()
+                await self.pollForOnboardingCompletion()
             }
 
             // Clean up pending state
             UserDefaults.standard.removeObject(forKey: "gmail_oauth_state")
             print("[OnboardingManager] Cleared gmail_oauth_state")
+            
+        } catch {
+            print("[OnboardingManager][Error] \(error.localizedDescription)")
+            self.errorMessage = error.localizedDescription
         }
+        
+        isPollingForCompletion = false
+    }
+    
+    // MARK: - Production Polling Logic
+    private func pollForOnboardingCompletion() async {
+        print("[OnboardingManager] Starting polling for onboarding completion...")
+        
+        var attempts = 0
+        let quickRetries = 3      // Quick retries for race condition
+        let quickDelay = 0.2      // 200ms for quick retries
+        var delay = initialPollingDelay
+        
+        while attempts < maxPollingAttempts {
+            attempts += 1
+            print("[OnboardingManager] Polling attempt \(attempts)/\(maxPollingAttempts)")
+            
+            // Use shorter delays for first few attempts (race condition fix)
+            let currentDelay = attempts <= quickRetries ? quickDelay : delay
+            
+            // Wait before checking
+            try? await Task.sleep(nanoseconds: UInt64(currentDelay * 1_000_000_000))
+            
+            do {
+                let token = try await self.supabaseSvc.currentAccessToken()
+                let status = try await self.api.getOnboardingStatus(accessToken: token)
+                
+                print("[OnboardingManager] Poll result → step: \(status.step), completed: \(status.onboardingCompleted)")
+                
+                // Check if onboarding is complete
+                if status.onboardingCompleted || status.step == .completed {
+                    print("[OnboardingManager] ✅ Onboarding completed! Updating state...")
+                    self.needsOnboarding = false
+                    self.step = .completed
+                    self.gmailConnected = status.gmailConnected
+                    return // Success! Stop polling
+                }
+                
+                // Update current state but continue polling
+                self.step = OnboardingStep(from: status.step)
+                self.gmailConnected = status.gmailConnected
+                
+            } catch {
+                print("[OnboardingManager] Polling error: \(error.localizedDescription)")
+            }
+            
+            // Only use exponential backoff after quick retries
+            if attempts > quickRetries {
+                delay = min(delay * 1.5 + Double.random(in: 0...0.5), maxPollingDelay)
+            }
+        }
+        
+        print("[OnboardingManager] ⚠️ Polling timeout reached. Manual refresh may be needed.")
+        // Final attempt to refresh status
+        await refreshStatus()
     }
 
     func completeGmailAuth(code: String, state: String) async {
+        isPollingForCompletion = true
+        
         await withLoading {
             print("[OnboardingManager] Completing Gmail auth manually with code=\(code.prefix(8))… and state=\(state)")
             let token = try await self.supabaseSvc.currentAccessToken()
@@ -137,10 +211,13 @@ final class OnboardingManager: ObservableObject {
                 state: state
             )
             self.gmailConnected = response.gmailConnected
+            
             if response.gmailConnected {
-                await self.refreshStatus()
+                await self.pollForOnboardingCompletion()
             }
         }
+        
+        isPollingForCompletion = false
     }
 
     func refreshGmailStatus() async {
@@ -160,6 +237,21 @@ final class OnboardingManager: ObservableObject {
             _ = try await self.api.disconnectGmail(accessToken: token)
             self.gmailConnected = false
             print("[OnboardingManager] Gmail disconnected.")
+        }
+    }
+    
+    // MARK: - Manual completion (fallback)
+    func forceCompleteOnboarding() async {
+        print("[OnboardingManager] Manual completion requested")
+        await refreshStatus()
+        
+        // If backend still hasn't marked as complete, allow manual override
+        if !needsOnboarding {
+            print("[OnboardingManager] Backend confirms completion")
+        } else {
+            print("[OnboardingManager] Backend not ready, but user wants to continue")
+            self.step = .completed
+            self.needsOnboarding = false
         }
     }
 

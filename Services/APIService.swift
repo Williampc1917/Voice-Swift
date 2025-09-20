@@ -211,3 +211,21 @@ extension APIService {
         return try decoder.decode(GmailRetrieveResponse.self, from: data)
     }
 }
+extension APIService {
+    /// Get fresh onboarding status (bypasses any caching/race conditions)
+    func getFreshOnboardingStatus(accessToken: String) async throws -> WireOnboardingStatus {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/status/fresh"))
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                     String(data: data, encoding: .utf8) ?? "")
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(WireOnboardingStatus.self, from: data)
+    }
+}
