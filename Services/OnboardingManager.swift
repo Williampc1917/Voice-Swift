@@ -4,6 +4,11 @@
 //  Created by William Pineda on 9/9/25.
 
 
+//  OnboardingManager.swift
+//  voice-gmail-assistant
+//
+//  Created by William Pineda on 9/9/25.
+
 import Foundation
 import SwiftUI
 
@@ -104,9 +109,6 @@ final class OnboardingManager: ObservableObject {
         }
 
         print("[OnboardingManager] Found pending Gmail OAuth state=\(state). Attempting to complete…")
-
-        // Set polling state
-        isPollingForCompletion = true
         
         do {
             let token = try await self.supabaseSvc.currentAccessToken()
@@ -118,20 +120,32 @@ final class OnboardingManager: ObservableObject {
             )
             print("[OnboardingManager] Retrieved OAuth data from backend: code=\(retrieve.code.prefix(8))…, state=\(retrieve.state)")
 
-            // Step 2: Finish OAuth
+            // Step 2: Finish OAuth and follow backend navigation instructions
             let response = try await self.api.postGmailCallback(
                 accessToken: token,
                 code: retrieve.code,
                 state: retrieve.state
             )
-            print("[OnboardingManager] Completed OAuth callback. gmailConnected=\(response.gmailConnected)")
+            print("[OnboardingManager] OAuth callback response: nextStep=\(response.nextStep), gmailConnected=\(response.gmailConnected)")
 
-            // Step 3: Update local Gmail connection state immediately
-            self.gmailConnected = response.gmailConnected
-
-            // Step 4: Start polling for backend to complete onboarding
-            if response.gmailConnected {
-                await self.pollForOnboardingCompletion()
+            // 🔥 Follow backend navigation instructions directly
+            switch response.nextStep {
+            case "redirect_to_main_app":
+                print("[OnboardingManager] Backend says: redirect to main app")
+                self.needsOnboarding = false
+                self.step = .completed
+                
+            case "stay_on_gmail":
+                print("[OnboardingManager] Backend says: stay on Gmail view")
+                self.gmailConnected = response.gmailConnected
+                
+            case "go_to_profile_step":
+                print("[OnboardingManager] Backend says: go to profile step")
+                self.step = .profile
+                
+            default:
+                print("[OnboardingManager] Backend says: default action, nextStep=\(response.nextStep)")
+                self.gmailConnected = response.gmailConnected
             }
 
             // Clean up pending state
@@ -142,11 +156,9 @@ final class OnboardingManager: ObservableObject {
             print("[OnboardingManager][Error] \(error.localizedDescription)")
             self.errorMessage = error.localizedDescription
         }
-        
-        isPollingForCompletion = false
     }
     
-    // MARK: - Production Polling Logic
+    // MARK: - Production Polling Logic (Fallback - should not be needed now)
     private func pollForOnboardingCompletion() async {
         print("[OnboardingManager] Starting polling for onboarding completion...")
         
@@ -173,7 +185,7 @@ final class OnboardingManager: ObservableObject {
                 
                 // Check if onboarding is complete
                 if status.onboardingCompleted || status.step == .completed {
-                    print("[OnboardingManager] ✅ Onboarding completed! Updating state...")
+                    print("[OnboardingManager] ✅ Onboarding completed via polling! Updating state...")
                     self.needsOnboarding = false
                     self.step = .completed
                     self.gmailConnected = status.gmailConnected
@@ -210,10 +222,25 @@ final class OnboardingManager: ObservableObject {
                 code: code,
                 state: state
             )
-            self.gmailConnected = response.gmailConnected
             
-            if response.gmailConnected {
-                await self.pollForOnboardingCompletion()
+            // Follow backend navigation instructions
+            switch response.nextStep {
+            case "redirect_to_main_app":
+                print("[OnboardingManager] Backend says: redirect to main app")
+                self.needsOnboarding = false
+                self.step = .completed
+                
+            case "stay_on_gmail":
+                print("[OnboardingManager] Backend says: stay on Gmail view")
+                self.gmailConnected = response.gmailConnected
+                
+            case "go_to_profile_step":
+                print("[OnboardingManager] Backend says: go to profile step")
+                self.step = .profile
+                
+            default:
+                print("[OnboardingManager] Backend says: default action")
+                self.gmailConnected = response.gmailConnected
             }
         }
         

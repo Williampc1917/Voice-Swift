@@ -5,6 +5,12 @@
 //  Created by William Pineda on 9/7/25.
 //
 
+//
+//  ContentView.swift
+//  voice-gmail-assistant
+//
+//  Created by William Pineda on 9/7/25.
+//
 
 import SwiftUI
 
@@ -77,6 +83,10 @@ struct ContentView: View {
         .onChange(of: onboarding.needsOnboarding) { needsOnboarding in
             Task { await handleOnboardingChange(needsOnboarding) }
         }
+        // 🔥 ADDED: Listen for step changes to catch backend-driven completion
+        .onChange(of: onboarding.step) { step in
+            Task { await handleStepChange(step) }
+        }
     }
     
     // MARK: - Flow Control
@@ -118,8 +128,20 @@ struct ContentView: View {
     }
     
     private func handleOnboardingChange(_ needsOnboarding: Bool) async {
-        // Only transition if we're currently in onboarding
-        if transitions.currentView == .onboarding && !needsOnboarding {
+        print("[ContentView] Onboarding needs changed: \(needsOnboarding)")
+        
+        // If onboarding is no longer needed, go to main app
+        if !needsOnboarding && transitions.currentView == .onboarding {
+            await transitions.showMainApp()
+        }
+    }
+    
+    // 🔥 ADDED: Handle step changes to catch backend-driven completion
+    private func handleStepChange(_ step: OnboardingStep) async {
+        print("[ContentView] Step changed to: \(step)")
+        
+        if step == .completed {
+            print("[ContentView] Step is completed, transitioning to main app")
             await transitions.showMainApp()
         }
     }
