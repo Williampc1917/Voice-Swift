@@ -49,7 +49,7 @@ struct OnboardingGmailView: View {
 
                 Spacer()
 
-                // Main content area
+                // Main content area - ALL STATES NOW HAVE CONSISTENT SPACING
                 VStack(spacing: 20) {
                     
                     // Auto-polling state (waiting for OAuth to complete)
@@ -93,7 +93,9 @@ struct OnboardingGmailView: View {
                         }
                         .appCardStyle()
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 44)
+                        
+                        // CONSISTENT SPACING - Add spacer to match other states
+                        Spacer().frame(height: 44)
                     }
                     
                     // Processing state (when OAuth is completing in background)
@@ -109,7 +111,9 @@ struct OnboardingGmailView: View {
                         }
                         .appCardStyle()
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 44)
+                        
+                        // CONSISTENT SPACING - Add spacer to match other states
+                        Spacer().frame(height: 44)
                     }
                     
                     // Success state (Gmail connected successfully)
@@ -127,6 +131,10 @@ struct OnboardingGmailView: View {
                                     .foregroundColor(.green)
                                     .multilineTextAlignment(.center)
                                 
+                                Text("You can now use voice commands to manage your email and calendar.")
+                                    .font(.callout)
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .multilineTextAlignment(.center)
                             }
                             .appCardStyle()
                             .padding(.horizontal, 24)
@@ -146,12 +154,7 @@ struct OnboardingGmailView: View {
                             }
                             .appButtonStyle(disabled: onboarding.isLoading)
                             .padding(.horizontal, 24)
-                            
-                            // Optional: Disconnect option
-                            
-                            .font(.footnote)
-                            .foregroundColor(.white.opacity(0.6))
-                            .padding(.bottom, 44)
+                            .padding(.bottom, 44) // CONSISTENT SPACING
                         }
                     }
                     
@@ -190,7 +193,7 @@ struct OnboardingGmailView: View {
                             }
                             .appButtonStyle(disabled: onboarding.isLoading)
                             .padding(.horizontal, 24)
-                            .padding(.bottom, 44)
+                            .padding(.bottom, 44) // CONSISTENT SPACING
                         }
                     }
                     
@@ -220,7 +223,7 @@ struct OnboardingGmailView: View {
                                 .foregroundColor(.white.opacity(0.6))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 32)
-                                .padding(.bottom, 44)
+                                .padding(.bottom, 44) // CONSISTENT SPACING
                         }
                     }
                 }
@@ -311,15 +314,28 @@ struct OnboardingGmailView: View {
         }())
 }
 
-//#Preview("Success State") {
- //   OnboardingGmailView()
- //       .environmentObject({
- //           let mgr = OnboardingManager()
+#Preview("Success State") {
+    OnboardingGmailView()
+        .environmentObject({
+            let mgr = OnboardingManager()
             // Success state - Gmail connected
- //           mgr.gmailConnected = true
- //           mgr.errorMessage = nil
- //           mgr.isLoading = false
- //           mgr.isProcessingOAuth = false
- //           return mgr
- //       }())
-//}
+            mgr.gmailConnected = true
+            mgr.errorMessage = nil
+            mgr.isLoading = false
+            mgr.isProcessingOAuth = false
+            return mgr
+        }())
+}
+
+#Preview("Error State") {
+    OnboardingGmailView()
+        .environmentObject({
+            let mgr = OnboardingManager()
+            // Error state - connection failed
+            mgr.gmailConnected = false
+            mgr.errorMessage = "Failed to connect Gmail. Please check your network connection and try again."
+            mgr.isLoading = false
+            mgr.isProcessingOAuth = false
+            return mgr
+        }())
+}
