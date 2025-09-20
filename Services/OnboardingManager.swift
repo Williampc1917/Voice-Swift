@@ -95,10 +95,16 @@ final class OnboardingManager: ObservableObject {
         }
     }
 
-    // MARK: - Enhanced OAuth Completion
+    // MARK: - Enhanced OAuth Completion (polling-friendly)
     func completeGmailAuthIfPending() async {
         guard let state = UserDefaults.standard.string(forKey: "gmail_oauth_state") else {
             print("🔍 [OnboardingManager] No pending OAuth state")
+            return
+        }
+
+        // Prevent multiple simultaneous completion attempts
+        guard !isProcessingOAuth else {
+            print("🔍 [OnboardingManager] OAuth completion already in progress")
             return
         }
 
@@ -108,9 +114,21 @@ final class OnboardingManager: ObservableObject {
         do {
             let token = try await self.supabaseSvc.currentAccessToken()
             
-            // Step 1: Retrieve OAuth data
-            let retrieve = try await self.api.retrieveGmailOAuthData(accessToken: token, state: state)
-            print("🔍 [OnboardingManager] Retrieved OAuth data successfully")
+            // Step 1: Try to retrieve OAuth data (this might fail if backend hasn't processed it yet)
+            let retrieve: GmailRetrieveResponse
+            do {
+                retrieve = try await self.api.retrieveGmailOAuthData(accessToken: token, state: state)
+                print("🔍 [OnboardingManager] Retrieved OAuth data successfully")
+            } catch {
+                // If retrieval fails, it might be too early - this is normal for polling
+                if error.localizedDescription.contains("404") {
+                    print("🔍 [OnboardingManager] OAuth data not ready yet (404) - this is normal during polling")
+                    self.isProcessingOAuth = false
+                    return // Exit gracefully for polling to try again
+                } else {
+                    throw error // Re-throw other errors
+                }
+            }
             
             // Step 2: Complete OAuth
             let response = try await self.api.postGmailCallback(
@@ -126,32 +144,36 @@ final class OnboardingManager: ObservableObject {
             // Clear any previous errors
             self.errorMessage = nil
             
-            // 🔥 FIXED: Update state in a coordinated way to prevent race conditions
+            // Update state in a coordinated way to prevent race conditions
             await self.refreshStatusAndCompleteOnboardingIfReady()
             
         } catch {
             print("🔍 [OnboardingManager] OAuth error: \(error)")
             
-            // Clean up state on any error
-            UserDefaults.standard.removeObject(forKey: "gmail_oauth_state")
-            
-            // Set user-friendly error messages
-            if error.localizedDescription.contains("404") {
-                self.errorMessage = "OAuth session expired or was cancelled. Please try connecting Gmail again."
-            } else if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
-                self.errorMessage = "Network error. Please check your connection and try again."
-            } else {
-                self.errorMessage = "Failed to connect Gmail. Please try again."
+            // Only clean up state and show error if it's not a "too early" error
+            if !error.localizedDescription.contains("404") {
+                // Clean up state on error
+                UserDefaults.standard.removeObject(forKey: "gmail_oauth_state")
+                
+                // Set user-friendly error messages
+                if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
+                    self.errorMessage = "Network error. Please check your connection and try again."
+                } else if error.localizedDescription.contains("prepared statement") || error.localizedDescription.contains("database") {
+                    self.errorMessage = "Server is temporarily busy. Please try again in a moment."
+                } else {
+                    self.errorMessage = "Failed to connect Gmail. Please try again."
+                }
+                
+                // Refresh Gmail status to show current state
+                await self.refreshGmailStatus()
             }
-            
-            // Refresh Gmail status to show current state
-            await self.refreshGmailStatus()
+            // For 404 errors during polling, we just exit gracefully without setting errors
         }
         
         self.isProcessingOAuth = false
     }
 
-    // 🔥 NEW: Coordinated status refresh and onboarding completion
+    // MARK: - Coordinated status refresh and onboarding completion
     private func refreshStatusAndCompleteOnboardingIfReady() async {
         await withLoading {
             let token = try await self.supabaseSvc.currentAccessToken()
