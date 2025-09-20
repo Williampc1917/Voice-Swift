@@ -2,8 +2,6 @@
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/9/25.
-
-
 //  OnboardingManager.swift
 //  voice-gmail-assistant
 //
@@ -43,34 +41,29 @@ final class OnboardingManager: ObservableObject {
     @Published var gmailConnected: Bool = false
     @Published var gmailState: String?
     
-    // Polling state
-    @Published var isPollingForCompletion = false
+    // New: OAuth completion state
+    @Published var isProcessingOAuth = false
 
     private let supabaseSvc = SupabaseService()
     private let api = APIService()
-    
-    // Polling configuration
-    private let maxPollingAttempts = 10
-    private let initialPollingDelay: TimeInterval = 1.0 // Start with 1 second
-    private let maxPollingDelay: TimeInterval = 8.0   // Cap at 8 seconds
 
     // MARK: - Check onboarding status
     func refreshStatus() async {
         await withLoading {
-            print("[OnboardingManager] Refreshing onboarding status…")
+            print("🔍 [OnboardingManager] Refreshing onboarding status…")
             let token = try await self.supabaseSvc.currentAccessToken()
             let status = try await self.api.getOnboardingStatus(accessToken: token)
             self.needsOnboarding = !status.onboardingCompleted
             self.step = OnboardingStep(from: status.step)
             self.gmailConnected = status.gmailConnected
-            print("[OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding), gmailConnected=\(self.gmailConnected)")
+            print("🔍 [OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding), gmailConnected=\(self.gmailConnected)")
         }
     }
 
     // MARK: - Submit profile name
     func submitDisplayName(_ name: String) async {
         await withLoading {
-            print("[OnboardingManager] Submitting display name=\(name)")
+            print("🔍 [OnboardingManager] Submitting display name=\(name)")
             let token = try await self.supabaseSvc.currentAccessToken()
             _ = try await self.api.updateProfileName(
                 accessToken: token,
@@ -84,14 +77,18 @@ final class OnboardingManager: ObservableObject {
     // MARK: - Gmail Flow
     func startGmailAuth() async {
         await withLoading {
-            print("[OnboardingManager] Starting Gmail OAuth…")
+            print("🔍 [OnboardingManager] Starting Gmail OAuth…")
+            
+            // Clear any previous error
+            self.errorMessage = nil
+            
             let token = try await self.supabaseSvc.currentAccessToken()
             let response = try await self.api.getGmailAuthURL(accessToken: token)
 
             // Save state for later
             self.gmailState = response.state
             UserDefaults.standard.set(response.state, forKey: "gmail_oauth_state")
-            print("[OnboardingManager] Saved gmail_oauth_state=\(response.state)")
+            print("🔍 [OnboardingManager] Saved gmail_oauth_state=\(response.state)")
 
             // Open Google login in Safari
             if let url = URL(string: response.authUrl) {
@@ -102,194 +99,120 @@ final class OnboardingManager: ObservableObject {
         }
     }
 
+    // MARK: - Simple OAuth Completion
     func completeGmailAuthIfPending() async {
         guard let state = UserDefaults.standard.string(forKey: "gmail_oauth_state") else {
-            print("[OnboardingManager] No pending Gmail OAuth state found.")
+            print("🔍 [OnboardingManager] No pending OAuth state")
             return
         }
 
-        print("[OnboardingManager] Found pending Gmail OAuth state=\(state). Attempting to complete…")
+        print("🔍 [OnboardingManager] Processing OAuth completion...")
+        self.isProcessingOAuth = true
         
         do {
             let token = try await self.supabaseSvc.currentAccessToken()
-
-            // Step 1: Retrieve data from backend
-            let retrieve = try await self.api.retrieveGmailOAuthData(
-                accessToken: token,
-                state: state
-            )
-            print("[OnboardingManager] Retrieved OAuth data from backend: code=\(retrieve.code.prefix(8))…, state=\(retrieve.state)")
-
-            // Step 2: Finish OAuth and follow backend navigation instructions
+            
+            // Step 1: Retrieve OAuth data
+            let retrieve = try await self.api.retrieveGmailOAuthData(accessToken: token, state: state)
+            print("🔍 [OnboardingManager] Retrieved OAuth data successfully")
+            
+            // Step 2: Complete OAuth
             let response = try await self.api.postGmailCallback(
                 accessToken: token,
                 code: retrieve.code,
                 state: retrieve.state
             )
-            print("[OnboardingManager] OAuth callback response: nextStep=\(response.nextStep), gmailConnected=\(response.gmailConnected)")
-
-            // 🔥 Follow backend navigation instructions directly
-            switch response.nextStep {
-            case "redirect_to_main_app":
-                print("[OnboardingManager] Backend says: redirect to main app")
-                self.needsOnboarding = false
-                self.step = .completed
-                
-            case "stay_on_gmail":
-                print("[OnboardingManager] Backend says: stay on Gmail view")
-                self.gmailConnected = response.gmailConnected
-                
-            case "go_to_profile_step":
-                print("[OnboardingManager] Backend says: go to profile step")
-                self.step = .profile
-                
-            default:
-                print("[OnboardingManager] Backend says: default action, nextStep=\(response.nextStep)")
-                self.gmailConnected = response.gmailConnected
-            }
-
-            // Clean up pending state
+            print("🔍 [OnboardingManager] OAuth completed successfully")
+            
+            // Clean up immediately on success
             UserDefaults.standard.removeObject(forKey: "gmail_oauth_state")
-            print("[OnboardingManager] Cleared gmail_oauth_state")
+            
+            // Clear any previous errors
+            self.errorMessage = nil
+            
+            // Refresh status to get latest state
+            await self.refreshStatus()
             
         } catch {
-            print("[OnboardingManager][Error] \(error.localizedDescription)")
-            self.errorMessage = error.localizedDescription
-        }
-    }
-    
-    // MARK: - Production Polling Logic (Fallback - should not be needed now)
-    private func pollForOnboardingCompletion() async {
-        print("[OnboardingManager] Starting polling for onboarding completion...")
-        
-        var attempts = 0
-        let quickRetries = 3      // Quick retries for race condition
-        let quickDelay = 0.2      // 200ms for quick retries
-        var delay = initialPollingDelay
-        
-        while attempts < maxPollingAttempts {
-            attempts += 1
-            print("[OnboardingManager] Polling attempt \(attempts)/\(maxPollingAttempts)")
+            print("🔍 [OnboardingManager] OAuth error: \(error)")
             
-            // Use shorter delays for first few attempts (race condition fix)
-            let currentDelay = attempts <= quickRetries ? quickDelay : delay
+            // Clean up state on any error
+            UserDefaults.standard.removeObject(forKey: "gmail_oauth_state")
             
-            // Wait before checking
-            try? await Task.sleep(nanoseconds: UInt64(currentDelay * 1_000_000_000))
-            
-            do {
-                let token = try await self.supabaseSvc.currentAccessToken()
-                let status = try await self.api.getOnboardingStatus(accessToken: token)
-                
-                print("[OnboardingManager] Poll result → step: \(status.step), completed: \(status.onboardingCompleted)")
-                
-                // Check if onboarding is complete
-                if status.onboardingCompleted || status.step == .completed {
-                    print("[OnboardingManager] ✅ Onboarding completed via polling! Updating state...")
-                    self.needsOnboarding = false
-                    self.step = .completed
-                    self.gmailConnected = status.gmailConnected
-                    return // Success! Stop polling
-                }
-                
-                // Update current state but continue polling
-                self.step = OnboardingStep(from: status.step)
-                self.gmailConnected = status.gmailConnected
-                
-            } catch {
-                print("[OnboardingManager] Polling error: \(error.localizedDescription)")
+            // Set user-friendly error messages
+            if error.localizedDescription.contains("404") {
+                self.errorMessage = "OAuth session expired or was cancelled. Please try connecting Gmail again."
+            } else if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
+                self.errorMessage = "Network error. Please check your connection and try again."
+            } else {
+                self.errorMessage = "Failed to connect Gmail. Please try again."
             }
             
-            // Only use exponential backoff after quick retries
-            if attempts > quickRetries {
-                delay = min(delay * 1.5 + Double.random(in: 0...0.5), maxPollingDelay)
-            }
+            // Refresh Gmail status to show current state
+            await self.refreshGmailStatus()
         }
         
-        print("[OnboardingManager] ⚠️ Polling timeout reached. Manual refresh may be needed.")
-        // Final attempt to refresh status
-        await refreshStatus()
+        self.isProcessingOAuth = false
     }
 
-    func completeGmailAuth(code: String, state: String) async {
-        isPollingForCompletion = true
-        
+    // MARK: - Manual Continue (for successful OAuth)
+    func continueAfterGmailSuccess() async {
         await withLoading {
-            print("[OnboardingManager] Completing Gmail auth manually with code=\(code.prefix(8))… and state=\(state)")
-            let token = try await self.supabaseSvc.currentAccessToken()
-            let response = try await self.api.postGmailCallback(
-                accessToken: token,
-                code: code,
-                state: state
-            )
+            print("🔍 [OnboardingManager] User clicked continue after Gmail success")
             
-            // Follow backend navigation instructions
-            switch response.nextStep {
-            case "redirect_to_main_app":
-                print("[OnboardingManager] Backend says: redirect to main app")
-                self.needsOnboarding = false
+            // Refresh status first
+            await self.refreshStatus()
+            
+            // If onboarding is complete, advance to completed step
+            if !self.needsOnboarding {
                 self.step = .completed
-                
-            case "stay_on_gmail":
-                print("[OnboardingManager] Backend says: stay on Gmail view")
-                self.gmailConnected = response.gmailConnected
-                
-            case "go_to_profile_step":
-                print("[OnboardingManager] Backend says: go to profile step")
-                self.step = .profile
-                
-            default:
-                print("[OnboardingManager] Backend says: default action")
-                self.gmailConnected = response.gmailConnected
+                print("🔍 [OnboardingManager] Onboarding completed, advancing to main app")
+            } else {
+                print("🔍 [OnboardingManager] Onboarding still needed, staying in flow")
             }
         }
-        
-        isPollingForCompletion = false
     }
 
+    // MARK: - Retry mechanism
+    func retryGmailConnection() async {
+        print("🔍 [OnboardingManager] Retrying Gmail connection")
+        
+        // Clear error state
+        self.errorMessage = nil
+        
+        // Start fresh OAuth flow
+        await self.startGmailAuth()
+    }
+
+    // MARK: - Gmail Status Management
     func refreshGmailStatus() async {
         await withLoading {
-            print("[OnboardingManager] Refreshing Gmail connection status…")
+            print("🔍 [OnboardingManager] Refreshing Gmail connection status…")
             let token = try await self.supabaseSvc.currentAccessToken()
             let response = try await self.api.getGmailStatus(accessToken: token)
             self.gmailConnected = response.connected
-            print("[OnboardingManager] Gmail status connected=\(self.gmailConnected)")
+            print("🔍 [OnboardingManager] Gmail status connected=\(self.gmailConnected)")
         }
     }
 
     func disconnectGmail() async {
         await withLoading {
-            print("[OnboardingManager] Disconnecting Gmail…")
+            print("🔍 [OnboardingManager] Disconnecting Gmail…")
             let token = try await self.supabaseSvc.currentAccessToken()
             _ = try await self.api.disconnectGmail(accessToken: token)
             self.gmailConnected = false
-            print("[OnboardingManager] Gmail disconnected.")
-        }
-    }
-    
-    // MARK: - Manual completion (fallback)
-    func forceCompleteOnboarding() async {
-        print("[OnboardingManager] Manual completion requested")
-        await refreshStatus()
-        
-        // If backend still hasn't marked as complete, allow manual override
-        if !needsOnboarding {
-            print("[OnboardingManager] Backend confirms completion")
-        } else {
-            print("[OnboardingManager] Backend not ready, but user wants to continue")
-            self.step = .completed
-            self.needsOnboarding = false
+            self.errorMessage = nil
+            print("🔍 [OnboardingManager] Gmail disconnected.")
         }
     }
 
     // MARK: - Utility wrapper
     private func withLoading(_ work: @escaping () async throws -> Void) async {
         self.isLoading = true
-        self.errorMessage = nil
         do {
             try await work()
         } catch {
-            print("[OnboardingManager][Error] \(error.localizedDescription)")
+            print("🔍 [OnboardingManager][Error] \(error.localizedDescription)")
             self.errorMessage = error.localizedDescription
         }
         self.isLoading = false

@@ -81,10 +81,15 @@ struct ContentView: View {
             Task { await handleAuthChange(isAuth) }
         }
         .onChange(of: onboarding.needsOnboarding) { needsOnboarding in
+            print("🔍 [ContentView] needsOnboarding changed to: \(needsOnboarding)")
+            print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
             Task { await handleOnboardingChange(needsOnboarding) }
         }
         // 🔥 ADDED: Listen for step changes to catch backend-driven completion
         .onChange(of: onboarding.step) { step in
+            print("🔍 [ContentView] step changed to: \(step)")
+            print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
+            print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
             Task { await handleStepChange(step) }
         }
     }
@@ -128,21 +133,32 @@ struct ContentView: View {
     }
     
     private func handleOnboardingChange(_ needsOnboarding: Bool) async {
-        print("[ContentView] Onboarding needs changed: \(needsOnboarding)")
+        print("🔍 [ContentView] handleOnboardingChange called with needsOnboarding: \(needsOnboarding)")
+        print("🔍 [ContentView] Current transitions.currentView: \(transitions.currentView)")
+        print("🔍 [ContentView] Current step: \(onboarding.step)")
         
         // If onboarding is no longer needed, go to main app
         if !needsOnboarding && transitions.currentView == .onboarding {
+            print("🔍 [ContentView] ✅ Onboarding no longer needed, transitioning to main app")
             await transitions.showMainApp()
+            print("🔍 [ContentView] ✅ Transition to main app completed")
+        } else {
+            print("🔍 [ContentView] Not transitioning - needsOnboarding: \(needsOnboarding), currentView: \(transitions.currentView)")
         }
     }
     
     // 🔥 ADDED: Handle step changes to catch backend-driven completion
     private func handleStepChange(_ step: OnboardingStep) async {
-        print("[ContentView] Step changed to: \(step)")
+        print("🔍 [ContentView] handleStepChange called with step: \(step)")
+        print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
+        print("🔍 [ContentView] Current transitions.currentView: \(transitions.currentView)")
         
         if step == .completed {
-            print("[ContentView] Step is completed, transitioning to main app")
+            print("🔍 [ContentView] ✅ Step is completed, transitioning to main app")
             await transitions.showMainApp()
+            print("🔍 [ContentView] ✅ Transition to main app completed")
+        } else {
+            print("🔍 [ContentView] Step is not completed, staying in current view")
         }
     }
 }
