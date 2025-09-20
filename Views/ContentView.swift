@@ -8,203 +8,220 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var auth: AuthManager
-    @StateObject private var onboarding = OnboardingManager()
-    @StateObject private var transitions = TransitionCoordinator()
-    
-    var body: some View {
-        ZStack {
-            AppBackground().ignoresSafeArea()
-            
-            // Main content with smooth transitions
-            Group {
-                switch transitions.currentView {
-                case .loading:
-                    LoadingView(message: transitions.loadingMessage)
-                        .transition(.opacity)
-                    
-                case .auth:
-                    LoginView()
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
-                    
-                case .onboardingCheck:
-                    OnboardingCheckView()
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
-                    
-                case .onboarding:
-                    OnboardingContainerView()
-                        .environmentObject(onboarding)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
-                    
-                case .mainApp:
-                    ProfileView()
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
-                }
-            }
-            .animation(.easeInOut(duration: 0.4), value: transitions.currentView)
-            
-            // Overlay transition indicator if needed
-            if transitions.isTransitioning {
-                Color.black.opacity(0.1)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-            }
+  @EnvironmentObject var auth: AuthManager
+  @StateObject private var onboarding = OnboardingManager()
+  @StateObject private var transitions = TransitionCoordinator()
+
+  var body: some View {
+    ZStack {
+      // Use the new design system background
+      AppBackground()
+
+      // Main content with smooth transitions
+      Group {
+        switch transitions.currentView {
+        case .loading:
+          LoadingView(message: transitions.loadingMessage)
+            .transition(.opacity)
+
+        case .auth:
+          LoginView()
+            .transition(.asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
+        case .onboardingCheck:
+          OnboardingCheckView()
+            .transition(.asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
+        case .onboarding:
+          OnboardingContainerView()
+            .environmentObject(onboarding)
+            .transition(.asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
+        case .mainApp:
+          ProfileView()
+            .transition(.asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .leading).combined(with: .opacity)
+            ))
         }
-        .alert("Error", isPresented: .constant(auth.errorMessage != nil)) {
-            Button("OK") { auth.errorMessage = nil }
-        } message: {
-            Text(auth.errorMessage ?? "")
-        }
-        .task {
-            await handleAppFlow()
-        }
-        .onChange(of: auth.isAuthenticated) { isAuth in
-            Task { await handleAuthChange(isAuth) }
-        }
-        .onChange(of: onboarding.needsOnboarding) { needsOnboarding in
-            print("🔍 [ContentView] needsOnboarding changed to: \(needsOnboarding)")
-            print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
-            Task { await handleOnboardingChange(needsOnboarding) }
-        }
-        // 🔥 MODIFIED: More careful step change handling to prevent flashing
-        .onChange(of: onboarding.step) { step in
-            print("🔍 [ContentView] step changed to: \(step)")
-            print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
-            print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
-            
-            // Only handle step changes if we're currently in onboarding
-            if transitions.currentView == .onboarding {
-                Task { await handleStepChange(step) }
-            }
-        }
+      }
+      .animation(.easeInOut(duration: 0.4), value: transitions.currentView)
+
+      // Overlay transition indicator
+      if transitions.isTransitioning {
+        Color.black.opacity(0.15)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
     }
-    
-    // MARK: - Flow Control
-    private func handleAppFlow() async {
-        // Initial app launch flow
-        await transitions.transition(to: .loading, message: "Loading your session...")
-        
-        // Wait for auth restoration
-        while auth.isRestoringSession {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-        }
-        
-        if auth.isAuthenticated {
-            await handleAuthenticatedUser()
-        } else {
-            await transitions.showAuth()
-        }
+    .alert("Error", isPresented: .constant(auth.errorMessage != nil)) {
+      Button("OK") { auth.errorMessage = nil }
+    } message: {
+      Text(auth.errorMessage ?? "")
     }
-    
-    private func handleAuthChange(_ isAuthenticated: Bool) async {
-        if isAuthenticated {
-            await handleAuthenticatedUser()
-        } else {
-            await transitions.showAuth()
-        }
+    .task {
+      await handleAppFlow()
     }
-    
-    private func handleAuthenticatedUser() async {
-        await transitions.showOnboardingCheck()
-        
-        // Check onboarding status
-        await onboarding.refreshStatus()
-        
-        if onboarding.needsOnboarding {
-            await transitions.showOnboarding()
-        } else {
-            await transitions.showMainApp()
-        }
+    .onChange(of: auth.isAuthenticated) { isAuth in
+      Task { await handleAuthChange(isAuth) }
     }
-    
-    private func handleOnboardingChange(_ needsOnboarding: Bool) async {
-        print("🔍 [ContentView] handleOnboardingChange called with needsOnboarding: \(needsOnboarding)")
-        print("🔍 [ContentView] Current transitions.currentView: \(transitions.currentView)")
-        print("🔍 [ContentView] Current step: \(onboarding.step)")
-        
-        // If onboarding is no longer needed, go to main app
-        if !needsOnboarding && transitions.currentView == .onboarding {
-            print("🔍 [ContentView] ✅ Onboarding no longer needed, transitioning to main app")
-            await transitions.showMainApp()
-            print("🔍 [ContentView] ✅ Transition to main app completed")
-        } else {
-            print("🔍 [ContentView] Not transitioning - needsOnboarding: \(needsOnboarding), currentView: \(transitions.currentView)")
-        }
+    .onChange(of: onboarding.needsOnboarding) { needsOnboarding in
+      Task { await handleOnboardingChange(needsOnboarding) }
     }
-    
-    // 🔥 MODIFIED: More conservative step change handling
-    private func handleStepChange(_ step: OnboardingStep) async {
-        print("🔍 [ContentView] handleStepChange called with step: \(step)")
-        print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
-        print("🔍 [ContentView] Current transitions.currentView: \(transitions.currentView)")
-        
-        // Only transition to main app if we're actually in onboarding and step is completed
-        // AND needsOnboarding is false (double check to prevent race conditions)
-        if step == .completed &&
-           !onboarding.needsOnboarding &&
-           transitions.currentView == .onboarding {
-            print("🔍 [ContentView] ✅ Step is completed and onboarding not needed, transitioning to main app")
-            await transitions.showMainApp()
-            print("🔍 [ContentView] ✅ Transition to main app completed")
-        } else {
-            print("🔍 [ContentView] Not transitioning - step: \(step), needsOnboarding: \(onboarding.needsOnboarding), currentView: \(transitions.currentView)")
-        }
+    .onChange(of: onboarding.step) { step in
+      if transitions.currentView == .onboarding {
+        Task { await handleStepChange(step) }
+      }
     }
+  }
+
+  // MARK: - Flow Control
+  private func handleAppFlow() async {
+    await transitions.transition(to: .loading, message: "Loading your session...")
+
+    while auth.isRestoringSession {
+      try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 sec
+    }
+
+    if auth.isAuthenticated {
+      await handleAuthenticatedUser()
+    } else {
+      await transitions.showAuth()
+    }
+  }
+
+  private func handleAuthChange(_ isAuthenticated: Bool) async {
+    if isAuthenticated {
+      await handleAuthenticatedUser()
+    } else {
+      await transitions.showAuth()
+    }
+  }
+
+  private func handleAuthenticatedUser() async {
+    await transitions.showOnboardingCheck()
+    await onboarding.refreshStatus()
+
+    if onboarding.needsOnboarding {
+      await transitions.showOnboarding()
+    } else {
+      await transitions.showMainApp()
+    }
+  }
+
+  private func handleOnboardingChange(_ needsOnboarding: Bool) async {
+    if !needsOnboarding && transitions.currentView == .onboarding {
+      await transitions.showMainApp()
+    }
+  }
+
+  private func handleStepChange(_ step: OnboardingStep) async {
+    if step == .completed &&
+       !onboarding.needsOnboarding &&
+       transitions.currentView == .onboarding {
+      await transitions.showMainApp()
+    }
+  }
 }
 
-// MARK: - Supporting Views
+// MARK: - Supporting Views with OnboardingProfileView Styling
 
 struct LoadingView: View {
-    let message: String
-    @State private var animationPhase = 0.0
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Animated logo/icon
-            Image(systemName: "waveform")
-                .font(.system(size: 48, weight: .semibold))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(AppTheme.primary)
-                .scaleEffect(1.0 + sin(animationPhase) * 0.1)
-                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: animationPhase)
-                .onAppear { animationPhase = 1.0 }
-            
-            Text(message)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .transition(.scale.combined(with: .opacity))
+  let message: String
+  @State private var animationPhase = 0.0
+
+  var body: some View {
+    VStack(spacing: 24) {
+      // Icon with same styling as OnboardingProfileView
+      Image(systemName: "waveform")
+        .font(.system(size: 50, weight: .semibold))
+        .symbolRenderingMode(.hierarchical)
+        .foregroundColor(.blue)
+        .scaleEffect(1.0 + sin(animationPhase) * 0.08)
+        .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: animationPhase)
+        .onAppear { animationPhase = 1.0 }
+
+      Text(message)
+        .font(.callout)
+        .foregroundColor(.white.opacity(0.85))
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 32)
     }
+    .padding(24)
+    .background(
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .fill(Color.white.opacity(0.05))
+        .overlay(
+          RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+        )
+    )
+    .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+    .padding(.horizontal, 24)
+    .transition(.scale.combined(with: .opacity))
+  }
 }
 
 struct OnboardingCheckView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.2)
-            
-            Text("Setting up your account...")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-        .transition(.scale.combined(with: .opacity))
+  @State private var rotationAngle = 0.0
+
+  var body: some View {
+    VStack(spacing: 24) {
+      // Custom animated loading indicator with OnboardingProfileView styling
+      ZStack {
+        Circle()
+          .stroke(Color.white.opacity(0.2), lineWidth: 3)
+          .frame(width: 50, height: 50)
+        
+        Circle()
+          .trim(from: 0, to: 0.7)
+          .stroke(
+            LinearGradient(
+              colors: [Color.blue, Color.blue.opacity(0.3)],
+              startPoint: .leading,
+              endPoint: .trailing
+            ),
+            style: StrokeStyle(lineWidth: 3, lineCap: .round)
+          )
+          .frame(width: 50, height: 50)
+          .rotationEffect(.degrees(rotationAngle))
+          .animation(.linear(duration: 1.0).repeatForever(autoreverses: false), value: rotationAngle)
+          .onAppear { rotationAngle = 360 }
+      }
+      .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+
+      Text("Setting up your account...")
+        .font(.callout)
+        .foregroundColor(.white.opacity(0.85))
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 32)
     }
+    .padding(24)
+    .background(
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .fill(Color.white.opacity(0.05))
+        .overlay(
+          RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+        )
+    )
+    .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+    .padding(.horizontal, 24)
+    .transition(.scale.combined(with: .opacity))
+  }
 }
 
 #Preview {
-    ContentView()
-        .environmentObject(AuthManager())
+  ContentView()
+    .environmentObject(AuthManager())
 }

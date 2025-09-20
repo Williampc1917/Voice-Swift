@@ -12,58 +12,113 @@ struct ProfileView: View {
 
   var body: some View {
     ZStack {
-      AppBackground()
+      AppBackground() // Dark professional gradient
 
-      VStack(spacing: 20) {
+      VStack(spacing: 36) {
+        Spacer()
+
         if let p = auth.profile {
-          // Profile Card
-          VStack(spacing: 14) {
-            // Simple avatar badge using initials
+          // Profile Card with OnboardingProfileView styling
+          VStack(spacing: 20) {
+            // Avatar with improved styling
             Circle()
-              .fill(.white.opacity(0.18))
-              .frame(width: 72, height: 72)
+              .fill(Color.white.opacity(0.1))
+              .frame(width: 80, height: 80)
               .overlay(
                 Text(initials(from: p.displayName ?? p.email))
-                  .font(.title2.weight(.semibold))
+                  .font(.title.weight(.semibold))
+                  .foregroundColor(.white)
               )
+              .overlay(
+                Circle()
+                  .strokeBorder(Color.white.opacity(0.2), lineWidth: 2)
+              )
+              .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
 
-            Text(p.displayName?.isEmpty == false ? p.displayName! : "User")
-              .font(.title.bold())
+            VStack(spacing: 8) {
+              Text(p.displayName?.isEmpty == false ? p.displayName! : "User")
+                .font(.title.bold())
+                .foregroundColor(.white)
 
-            Text(p.email)
-              .font(.callout)
-              .foregroundStyle(.secondary)
+              Text(p.email)
+                .font(.callout)
+                .foregroundColor(.white.opacity(0.85))
 
-            if let plan = p.plan {
-              Text(plan.capitalized)
-                .font(.footnote.weight(.semibold))
-                .padding(.horizontal, 10).padding(.vertical, 6)
-                .background(.ultraThinMaterial, in: Capsule())
-                .overlay(Capsule().strokeBorder(.white.opacity(0.2)))
+              if let plan = p.plan {
+                Text(plan.capitalized)
+                  .font(.footnote.weight(.semibold))
+                  .foregroundColor(.white.opacity(0.9))
+                  .padding(.horizontal, 12)
+                  .padding(.vertical, 6)
+                  .background(
+                    Capsule()
+                      .fill(Color.white.opacity(0.1))
+                      .overlay(
+                        Capsule()
+                          .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                      )
+                  )
+                  .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+              }
             }
           }
-          .frame(maxWidth: .infinity)
-          .appCardStyle()
-          .padding(.horizontal, 20)
+          .padding(24)
+          .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+              .fill(Color.white.opacity(0.05))
+              .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                  .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+              )
+          )
+          .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+          .padding(.horizontal, 24)
           .transition(.scale.combined(with: .opacity))
 
+          Spacer()
+
+          // Sign out button with OnboardingProfileView styling
           Button {
             auth.signOut()
           } label: {
             Text("Sign Out")
-              .fontWeight(.semibold)
+              .font(.system(size: 18, weight: .semibold))
               .frame(maxWidth: .infinity)
-              .padding(.vertical, 14)
+              .padding(.vertical, 16)
           }
-          .buttonStyle(.borderedProminent)
-          .tint(AppTheme.primary)
-          .padding(.horizontal, 20)
-        } else {
-          ProgressView("Loading profile…")
-            .task { try? await auth.fetchProfile() }
-        }
+          .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+              .fill(Color.blue)
+              .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+          )
+          .foregroundColor(.white)
+          .padding(.horizontal, 24)
+          .padding(.bottom, 44)
 
-        Spacer(minLength: 10)
+        } else {
+          // Loading state with OnboardingProfileView styling
+          VStack(spacing: 20) {
+            ProgressView()
+              .scaleEffect(1.2)
+              .tint(.blue)
+
+            Text("Loading profile...")
+              .font(.callout)
+              .foregroundColor(.white.opacity(0.85))
+          }
+          .padding(24)
+          .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+              .fill(Color.white.opacity(0.05))
+              .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                  .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+              )
+          )
+          .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+          .padding(.horizontal, 24)
+          .task { try? await auth.fetchProfile() }
+        }
       }
     }
   }

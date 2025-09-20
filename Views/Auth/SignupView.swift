@@ -21,70 +21,88 @@ struct SignupView: View {
   var body: some View {
     NavigationStack {
       ZStack {
-        AppBackground()
+        AppBackground() // Dark professional background
 
         ScrollView {
-          VStack(spacing: 16) {
-            VStack(spacing: 6) {
-              Text("Create account").font(.title.bold())
-              Text("Use your email and a strong password")
-                .font(.callout).foregroundStyle(.secondary)
-            }
-            .padding(.top, 12)
+          VStack(spacing: 36) {
+            Spacer()
 
-            // Card
-            VStack(spacing: 14) {
+            // Header with white text
+            VStack(spacing: 12) {
+              Text("Create account")
+                .font(.title.bold())
+                .foregroundColor(.white)
+
+              Text("Use your email and a strong password")
+                .font(.callout)
+                .foregroundColor(.white.opacity(0.85))
+            }
+
+            // Input fields using dark theme components
+            VStack(spacing: 16) {
               LabeledEmailField(icon: "envelope", placeholder: "Email", text: $email)
               LabeledSecureField(icon: "key.fill", placeholder: "Password", text: $password)
 
-              // Rules (copy only; backend is source of truth)
-              VStack(alignment: .leading, spacing: 4) {
-                Text("Password must include:").font(.caption).bold()
+              // Password rules with white text
+              VStack(alignment: .leading, spacing: 6) {
+                Text("Password must include:")
+                  .font(.caption)
+                  .fontWeight(.semibold)
+                  .foregroundColor(.white.opacity(0.85))
+
                 Group {
                   Text("• At least 8 characters")
                   Text("• One lowercase, one uppercase")
                   Text("• One number and one symbol")
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.6))
               }
               .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.top, 8)
             }
             .appCardStyle()
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 24)
 
+            Spacer()
+
+            // Sign up button with OnboardingProfileView styling
             Button {
               auth.signUp(email: email, password: password)
               dismiss()
             } label: {
               Text("Sign Up")
-                .fontWeight(.semibold)
+                .font(.system(size: 18, weight: .semibold))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(.vertical, 16)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(AppTheme.primary)
+            .background(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.blue)
+                .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+            )
+            .foregroundColor(.white)
             .disabled(!meetsLocalMin)
-            .opacity(meetsLocalMin ? 1 : 0.6)
-            .padding(.horizontal, 20)
-            .animation(.spring(duration: 0.25), value: meetsLocalMin)
+            .opacity(meetsLocalMin ? 1 : 0.5)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 44)
+            .animation(.easeInOut(duration: 0.2), value: meetsLocalMin)
 
             Color.clear.frame(height: 1).onAppear {
               if !prefilledEmail.isEmpty { email = prefilledEmail }
             }
           }
-          .padding(.bottom, 24)
         }
         .scrollDismissesKeyboard(.interactively)
       }
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
           Button("Close") { dismiss() }
-            .tint(.primary) // default text color; keeps the single-accent rule intact
+            .foregroundColor(.white.opacity(0.85))
         }
       }
     }
-    .presentationBackground(.regularMaterial)
+    .presentationBackground(.clear) // Let the dark background show through
   }
 }
 

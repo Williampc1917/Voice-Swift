@@ -17,25 +17,31 @@ struct LoginView: View {
 
   var body: some View {
     ZStack {
-      AppBackground()
+      AppBackground() // Now uses the dark professional gradient
 
       ScrollView {
-        VStack(spacing: 24) {
-          // Heading
-          VStack(spacing: 8) {
+        VStack(spacing: 36) {
+          Spacer()
+
+          // Heading with white text for dark background
+          VStack(spacing: 12) {
             Image(systemName: "lock.shield")
-              .font(.system(size: 44, weight: .semibold))
+              .font(.system(size: 50, weight: .semibold))
               .symbolRenderingMode(.hierarchical)
+              .foregroundColor(.blue)
+              .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+
             Text("Welcome back")
-              .font(.largeTitle.weight(.bold))
+              .font(.title.bold())
+              .foregroundColor(.white)
+
             Text("Sign in to continue")
               .font(.callout)
-              .foregroundStyle(.secondary)
+              .foregroundColor(.white.opacity(0.85))
           }
-          .padding(.top, 24)
 
-          // Card with inputs
-          VStack(spacing: 14) {
+          // Input fields using dark theme components
+          VStack(spacing: 16) {
             LabeledEmailField(icon: "envelope", placeholder: "Email", text: $email)
             LabeledSecureField(icon: "key.fill", placeholder: "Password", text: $password)
 
@@ -43,49 +49,64 @@ struct LoginView: View {
               Spacer()
               Button("Forgot password?") { /* wire later */ }
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.6))
                 .buttonStyle(.plain)
             }
           }
           .appCardStyle()
-          .padding(.horizontal, 20)
+          .padding(.horizontal, 24)
 
-          // Sign in button
+          Spacer()
+
+          // Sign in button with OnboardingProfileView styling
           Button {
             auth.signIn(email: email, password: password)
           } label: {
             HStack {
-              if auth.isLoading { ProgressView().tint(.white) }
+              if auth.isLoading {
+                ProgressView().tint(.white)
+              }
               Text(auth.isLoading ? "Signing in…" : "Sign In")
-                .fontWeight(.semibold)
+                .font(.system(size: 18, weight: .semibold))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 16)
           }
-          .buttonStyle(.borderedProminent)
-          .tint(AppTheme.primary)
+          .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+              .fill(Color.blue)
+              .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+          )
+          .foregroundColor(.white)
           .disabled(!isValid || auth.isLoading)
-          .opacity((!isValid || auth.isLoading) ? 0.7 : 1)
-          .padding(.horizontal, 20)
-          .animation(.spring(duration: 0.25), value: isValid)
-          .animation(.spring(duration: 0.25), value: auth.isLoading)
+          .opacity(isValid ? 1 : 0.5)
+          .padding(.horizontal, 24)
+          .animation(.easeInOut(duration: 0.2), value: isValid)
+          .animation(.easeInOut(duration: 0.2), value: auth.isLoading)
 
-          // Go to signup
+          // Go to signup with white text
           Button {
             showSignup = true
           } label: {
-            Text("Create an account").fontWeight(.semibold)
+            Text("Create an account")
+              .font(.system(size: 16, weight: .semibold))
+              .foregroundColor(.white.opacity(0.85))
+              .padding(.vertical, 14)
+              .padding(.horizontal, 32)
+              .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                  .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+              )
           }
-          .buttonStyle(.bordered)
-          .tint(.primary) // neutral text button to keep single accent color usage
-          .padding(.bottom, 40)
+          .buttonStyle(.plain)
+          .padding(.bottom, 44)
         }
       }
       .scrollDismissesKeyboard(.interactively)
     }
     .sheet(isPresented: $showSignup) {
       SignupView(prefilledEmail: email)
-        .presentationDetents([.large])   // always full height
+        .presentationDetents([.large])
         .presentationCornerRadius(20)
     }
   }
