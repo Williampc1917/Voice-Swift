@@ -12,7 +12,6 @@
 		3D371D472E71382A0093E18F /* OnboardingWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */; };
 		3D371D492E71383E0093E18F /* OnboardingProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D482E7138340093E18F /* OnboardingProfileView.swift */; };
 		3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */; };
-		3D371D4D2E7138540093E18F /* OnboardingCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */; };
 		3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */; };
 		3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54C45D2E6EAE0D00801746 /* Inputs.swift */; };
 		3D54C4602E6F846900801746 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 3D54C45F2E6F846000801746 /* .gitignore */; };
@@ -62,7 +61,6 @@
 		3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWelcomeView.swift; sourceTree = "<group>"; };
 		3D371D482E7138340093E18F /* OnboardingProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProfileView.swift; sourceTree = "<group>"; };
 		3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGmailView.swift; sourceTree = "<group>"; };
-		3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompleteView.swift; sourceTree = "<group>"; };
 		3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
 		3D54C45D2E6EAE0D00801746 /* Inputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inputs.swift; sourceTree = "<group>"; };
 		3D54C45F2E6F846000801746 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
@@ -146,7 +144,6 @@
 			isa = PBXGroup;
 			children = (
 				3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */,
-				3D371D4C2E7138530093E18F /* OnboardingCompleteView.swift */,
 				3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */,
 				3D371D482E7138340093E18F /* OnboardingProfileView.swift */,
 				3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */,
@@ -436,7 +433,6 @@
 				3D782F792E6E44D20053BF4F /* APIService.swift in Sources */,
 				3D782F982E6E9F420053BF4F /* MeEnvelope.swift in Sources */,
 				3D782F8F2E6E53510053BF4F /* UserProfile.swift in Sources */,
-				3D371D4D2E7138540093E18F /* OnboardingCompleteView.swift in Sources */,
 				3D782F8E2E6E4A340053BF4F /* Config.swift in Sources */,
 				3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */,
 				3D782F782E6E44870053BF4F /* AuthManager.swift in Sources */,

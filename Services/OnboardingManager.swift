@@ -2,10 +2,6 @@
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/9/25.
-//  OnboardingManager.swift
-//  voice-gmail-assistant
-//
-//  Created by William Pineda on 9/9/25.
 
 import Foundation
 import SwiftUI
@@ -99,7 +95,7 @@ final class OnboardingManager: ObservableObject {
         }
     }
 
-    // MARK: - Simple OAuth Completion
+    // MARK: - Enhanced OAuth Completion
     func completeGmailAuthIfPending() async {
         guard let state = UserDefaults.standard.string(forKey: "gmail_oauth_state") else {
             print("🔍 [OnboardingManager] No pending OAuth state")
@@ -130,8 +126,8 @@ final class OnboardingManager: ObservableObject {
             // Clear any previous errors
             self.errorMessage = nil
             
-            // Refresh status to get latest state
-            await self.refreshStatus()
+            // 🔥 FIXED: Update state in a coordinated way to prevent race conditions
+            await self.refreshStatusAndCompleteOnboardingIfReady()
             
         } catch {
             print("🔍 [OnboardingManager] OAuth error: \(error)")
@@ -153,6 +149,21 @@ final class OnboardingManager: ObservableObject {
         }
         
         self.isProcessingOAuth = false
+    }
+
+    // 🔥 NEW: Coordinated status refresh and onboarding completion
+    private func refreshStatusAndCompleteOnboardingIfReady() async {
+        await withLoading {
+            let token = try await self.supabaseSvc.currentAccessToken()
+            let status = try await self.api.getOnboardingStatus(accessToken: token)
+            
+            // Update all state atomically
+            self.gmailConnected = status.gmailConnected
+            self.step = OnboardingStep(from: status.step)
+            self.needsOnboarding = !status.onboardingCompleted
+            
+            print("🔍 [OnboardingManager] Coordinated update → gmailConnected=\(self.gmailConnected), step=\(self.step), needsOnboarding=\(self.needsOnboarding)")
+        }
     }
 
     // MARK: - Manual Continue (for successful OAuth)

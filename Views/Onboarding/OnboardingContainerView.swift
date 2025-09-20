@@ -10,7 +10,8 @@ struct OnboardingContainerView: View {
     @EnvironmentObject var onboarding: OnboardingManager
     @State private var currentStepIndex = 0
     
-    private var allSteps: [OnboardingStep] = [.start, .profile, .gmail, .completed]
+    // Updated to only include the views that exist
+    private var allSteps: [OnboardingStep] = [.start, .profile, .gmail]
     
     var body: some View {
         ZStack {
@@ -41,7 +42,9 @@ struct OnboardingContainerView: View {
                         ))
                         
                 case .completed:
-                    OnboardingCompleteView()
+                    // If we somehow get to completed step while still in onboarding container,
+                    // just show the Gmail view (which will handle the transition out)
+                    OnboardingGmailView()
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.8).combined(with: .opacity),
                             removal: .move(edge: .leading).combined(with: .opacity)
@@ -50,7 +53,7 @@ struct OnboardingContainerView: View {
             }
             .animation(.easeInOut(duration: 0.5), value: onboarding.step)
             
-            // Progress indicator
+            // Progress indicator - updated for 3 steps instead of 4
             VStack {
                 HStack {
                     Spacer()
@@ -69,23 +72,30 @@ struct OnboardingContainerView: View {
     }
 }
 
-// MARK: - Progress Indicator
+// MARK: - Updated Progress Indicator
 struct OnboardingProgressView: View {
     let currentStep: OnboardingStep
     
     private var progress: Float {
         switch currentStep {
-        case .start: return 0.25
-        case .profile: return 0.5
-        case .gmail: return 0.75
-        case .completed: return 1.0
+        case .start: return 0.33        // 1/3
+        case .profile: return 0.66      // 2/3
+        case .gmail, .completed: return 1.0  // 3/3 (both gmail and completed show full)
+        }
+    }
+    
+    private var stepNumber: Int {
+        switch currentStep {
+        case .start: return 1
+        case .profile: return 2
+        case .gmail, .completed: return 3
         }
     }
     
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
-            // Step counter
-            Text("\(Int(progress * 4))/4")
+            // Step counter - now out of 3 instead of 4
+            Text("\(stepNumber)/3")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             

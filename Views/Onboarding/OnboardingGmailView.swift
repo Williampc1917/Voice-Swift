@@ -189,8 +189,9 @@ struct OnboardingGmailView: View {
                                         await onboarding.completeGmailAuthIfPending()
                                         await onboarding.refreshStatus()
                                         
-                                        // If Gmail connected and onboarding complete, go directly to ProfileView
+                                        // 🔥 FIXED: If Gmail connected and onboarding complete, skip OnboardingCompleteView
                                         if onboarding.gmailConnected && !onboarding.needsOnboarding {
+                                            // Direct transition without showing OnboardingCompleteView
                                             onboarding.needsOnboarding = false
                                         }
                                     }
@@ -229,9 +230,4 @@ struct OnboardingGmailView: View {
             }
         }
     }
-}
-
-#Preview {
-    OnboardingGmailView()
-        .environmentObject(OnboardingManager())
 }

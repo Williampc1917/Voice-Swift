@@ -5,13 +5,6 @@
 //  Created by William Pineda on 9/7/25.
 //
 
-//
-//  ContentView.swift
-//  voice-gmail-assistant
-//
-//  Created by William Pineda on 9/7/25.
-//
-
 import SwiftUI
 
 struct ContentView: View {
@@ -85,12 +78,16 @@ struct ContentView: View {
             print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
             Task { await handleOnboardingChange(needsOnboarding) }
         }
-        // 🔥 ADDED: Listen for step changes to catch backend-driven completion
+        // 🔥 MODIFIED: More careful step change handling to prevent flashing
         .onChange(of: onboarding.step) { step in
             print("🔍 [ContentView] step changed to: \(step)")
             print("🔍 [ContentView] Current transition view: \(transitions.currentView)")
             print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
-            Task { await handleStepChange(step) }
+            
+            // Only handle step changes if we're currently in onboarding
+            if transitions.currentView == .onboarding {
+                Task { await handleStepChange(step) }
+            }
         }
     }
     
@@ -147,18 +144,22 @@ struct ContentView: View {
         }
     }
     
-    // 🔥 ADDED: Handle step changes to catch backend-driven completion
+    // 🔥 MODIFIED: More conservative step change handling
     private func handleStepChange(_ step: OnboardingStep) async {
         print("🔍 [ContentView] handleStepChange called with step: \(step)")
         print("🔍 [ContentView] Current needsOnboarding: \(onboarding.needsOnboarding)")
         print("🔍 [ContentView] Current transitions.currentView: \(transitions.currentView)")
         
-        if step == .completed {
-            print("🔍 [ContentView] ✅ Step is completed, transitioning to main app")
+        // Only transition to main app if we're actually in onboarding and step is completed
+        // AND needsOnboarding is false (double check to prevent race conditions)
+        if step == .completed &&
+           !onboarding.needsOnboarding &&
+           transitions.currentView == .onboarding {
+            print("🔍 [ContentView] ✅ Step is completed and onboarding not needed, transitioning to main app")
             await transitions.showMainApp()
             print("🔍 [ContentView] ✅ Transition to main app completed")
         } else {
-            print("🔍 [ContentView] Step is not completed, staying in current view")
+            print("🔍 [ContentView] Not transitioning - step: \(step), needsOnboarding: \(onboarding.needsOnboarding), currentView: \(transitions.currentView)")
         }
     }
 }
