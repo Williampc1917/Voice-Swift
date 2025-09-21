@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D00632E2E80A30700604989 /* LinkifiedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D00632D2E80A2FB00604989 /* LinkifiedText.swift */; };
+		3D0063302E80A3A400604989 /* HTMLText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D00632F2E80A37600604989 /* HTMLText.swift */; };
+		3D0063322E80A50700604989 /* CleanEmailText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D0063312E80A50100604989 /* CleanEmailText.swift */; };
 		3D371D3A2E712B690093E18F /* OnboardingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D392E712B5C0093E18F /* OnboardingManager.swift */; };
 		3D371D442E7133000093E18F /* WireOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D432E7132FA0093E18F /* WireOnboarding.swift */; };
 		3D371D472E71382A0093E18F /* OnboardingWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */; };
@@ -59,6 +62,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3D00632D2E80A2FB00604989 /* LinkifiedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkifiedText.swift; sourceTree = "<group>"; };
+		3D00632F2E80A37600604989 /* HTMLText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLText.swift; sourceTree = "<group>"; };
+		3D0063312E80A50100604989 /* CleanEmailText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanEmailText.swift; sourceTree = "<group>"; };
 		3D371D392E712B5C0093E18F /* OnboardingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingManager.swift; sourceTree = "<group>"; };
 		3D371D432E7132FA0093E18F /* WireOnboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireOnboarding.swift; sourceTree = "<group>"; };
 		3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWelcomeView.swift; sourceTree = "<group>"; };
@@ -168,6 +174,9 @@
 		3D5B38242E7F2C98000D6F55 /* Testing */ = {
 			isa = PBXGroup;
 			children = (
+				3D0063312E80A50100604989 /* CleanEmailText.swift */,
+				3D00632F2E80A37600604989 /* HTMLText.swift */,
+				3D00632D2E80A2FB00604989 /* LinkifiedText.swift */,
 				3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */,
 			);
 			path = Testing;
@@ -446,6 +455,7 @@
 			files = (
 				3D782F942E6E9F020053BF4F /* WireUserProfile.swift in Sources */,
 				3D782F742E6E41D00053BF4F /* SignupView.swift in Sources */,
+				3D00632E2E80A30700604989 /* LinkifiedText.swift in Sources */,
 				3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */,
 				3D782F792E6E44D20053BF4F /* APIService.swift in Sources */,
 				3D782F982E6E9F420053BF4F /* MeEnvelope.swift in Sources */,
@@ -458,12 +468,14 @@
 				3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */,
 				3D371D442E7133000093E18F /* WireOnboarding.swift in Sources */,
 				3D782F962E6E9F2A0053BF4F /* WirePlan.swift in Sources */,
+				3D0063322E80A50700604989 /* CleanEmailText.swift in Sources */,
 				3D782F762E6E41ED0053BF4F /* ProfileView.swift in Sources */,
 				3DD220622E7F923D002D87B7 /* GmailModels.swift in Sources */,
 				3D7CC5402E7E288A00E0EBA7 /* TransitionCoordinator.swift in Sources */,
 				3D782F7A2E6E44D70053BF4F /* SupabaseService.swift in Sources */,
 				3D371D492E71383E0093E18F /* OnboardingProfileView.swift in Sources */,
 				3D371D3A2E712B690093E18F /* OnboardingManager.swift in Sources */,
+				3D0063302E80A3A400604989 /* HTMLText.swift in Sources */,
 				3D782F412E6E34BC0053BF4F /* ContentView.swift in Sources */,
 				3DD220642E7F924F002D87B7 /* CalendarModels.swift in Sources */,
 				3D371D472E71382A0093E18F /* OnboardingWelcomeView.swift in Sources */,

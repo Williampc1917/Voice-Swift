@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Calendar Status Response
+// MARK: - Calendar Status Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct CalendarStatusResponse: Codable {
     let connected: Bool
     let calendarsAccessible: Int?
@@ -17,26 +17,15 @@ struct CalendarStatusResponse: Codable {
     let healthDetails: CalendarHealthDetails?
     let expiresAt: String?
     let needsRefresh: Bool?
-    
-    enum CodingKeys: String, CodingKey {
-        case connected
-        case calendarsAccessible = "calendars_accessible"
-        case primaryCalendarAvailable = "primary_calendar_available"
-        case canCreateEvents = "can_create_events"
-        case connectionHealth = "connection_health"
-        case healthDetails = "health_details"
-        case expiresAt = "expires_at"
-        case needsRefresh = "needs_refresh"
-    }
 }
 
 // MARK: - Calendar Health Details
 struct CalendarHealthDetails: Codable {
     let calendarApiConnectivity: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case calendarApiConnectivity = "calendar_api_connectivity"
-    }
+    let status: String?
+    let message: String?
+    let severity: String?
+    let actionRequired: String?
 }
 
 // MARK: - Calendar Health Response
@@ -51,20 +40,8 @@ struct CalendarHealthResponse: Codable {
     let apiVersion: String
     let issuesFound: [String]
     let recommendations: [String]
-    
-    enum CodingKeys: String, CodingKey {
-        case healthy
-        case service
-        case timestamp
-        case googleCalendarApi = "google_calendar_api"
-        case oauthTokens = "oauth_tokens"
-        case databaseConnectivity = "database_connectivity"
-        case supportedOperations = "supported_operations"
-        case apiVersion = "api_version"
-        case issuesFound = "issues_found"
-        case recommendations
-    }
 }
+
 
 // MARK: - Health Status
 struct HealthStatus: Codable {
@@ -72,33 +49,18 @@ struct HealthStatus: Codable {
     let connectivity: String?
     let systemOperational: Bool?
     let status: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case healthy
-        case connectivity
-        case systemOperational = "system_operational"
-        case status
-    }
 }
 
-// MARK: - Calendar Events Response (fixed totalCount to optional)
+// MARK: - Calendar Events Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct CalendarEventsResponse: Codable {
     let events: [CalendarEvent]
-    let totalCount: Int?               // made optional to avoid keyNotFound crash
+    let totalCount: Int?
     let timeRange: CalendarTimeRange?
     let calendarsQueried: [String]?
     let hasMore: Bool?
-    
-    enum CodingKeys: String, CodingKey {
-        case events
-        case totalCount = "total_count"
-        case timeRange = "time_range"
-        case calendarsQueried = "calendars_queried"
-        case hasMore = "has_more"
-    }
 }
 
-// MARK: - Calendar Event
+// MARK: - Calendar Event (NO CodingKeys - relies on convertFromSnakeCase)
 struct CalendarEvent: Codable, Identifiable {
     let id: String
     let summary: String?
@@ -113,25 +75,9 @@ struct CalendarEvent: Codable, Identifiable {
     let attendeesCount: Int?
     let created: String?
     let updated: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case summary
-        case description
-        case startTime = "start_time"
-        case endTime = "end_time"
-        case timezone
-        case status
-        case location
-        case isAllDay = "is_all_day"
-        case isBusy = "is_busy"
-        case attendeesCount = "attendees_count"
-        case created
-        case updated
-    }
 }
 
-// MARK: - Calendar Time Range
+// MARK: - Calendar Time Range (NO CodingKeys - relies on convertFromSnakeCase)
 struct CalendarTimeRange: Codable {
     let start: String
     let end: String
@@ -143,15 +89,9 @@ struct CalendarsListResponse: Codable {
     let totalCount: Int
     let primaryCalendar: Calendar?
     let writableCalendars: Int?
-    
-    enum CodingKeys: String, CodingKey {
-        case calendars
-        case totalCount = "total_count"
-        case primaryCalendar = "primary_calendar"
-        case writableCalendars = "writable_calendars"
-    }
 }
 
+// MARK: - Calendar
 // MARK: - Calendar
 struct Calendar: Codable, Identifiable {
     let id: String
@@ -165,23 +105,9 @@ struct Calendar: Codable, Identifiable {
     let colorId: String?
     let backgroundColor: String?
     let foregroundColor: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case summary
-        case description
-        case timezone
-        case accessRole = "access_role"
-        case primary
-        case selected
-        case canCreateEvents = "can_create_events"
-        case colorId = "color_id"
-        case backgroundColor = "background_color"
-        case foregroundColor = "foreground_color"
-    }
 }
 
-// MARK: - Create Event Request
+// MARK: - Create Event Request (NO CodingKeys - relies on convertFromSnakeCase)
 struct CreateEventRequest: Codable {
     let summary: String
     let startTime: String
@@ -191,17 +117,6 @@ struct CreateEventRequest: Codable {
     let calendarId: String?
     let attendees: [String]?
     let timezone: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case summary
-        case startTime = "start_time"
-        case endTime = "end_time"
-        case description
-        case location
-        case calendarId = "calendar_id"
-        case attendees
-        case timezone
-    }
 }
 
 // MARK: - Create Event Response
@@ -211,30 +126,16 @@ struct CreateEventResponse: Codable {
     let message: String
     let calendarId: String
     let googleEventLink: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case success
-        case event
-        case message
-        case calendarId = "calendar_id"
-        case googleEventLink = "google_event_link"
-    }
 }
 
-// MARK: - Availability Check Request
+// MARK: - Availability Check Request (NO CodingKeys - relies on convertFromSnakeCase)
 struct AvailabilityCheckRequest: Codable {
     let startTime: String
     let endTime: String
     let calendarIds: [String]?
-    
-    enum CodingKeys: String, CodingKey {
-        case startTime = "start_time"
-        case endTime = "end_time"
-        case calendarIds = "calendar_ids"
-    }
 }
 
-// MARK: - Availability Response
+// MARK: - Availability Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct AvailabilityResponse: Codable {
     let isFree: Bool
     let timeRange: CalendarTimeRange
@@ -242,26 +143,11 @@ struct AvailabilityResponse: Codable {
     let calendarsChecked: [String: String]
     let totalConflicts: Int
     let recommendations: [String]
-    
-    enum CodingKeys: String, CodingKey {
-        case isFree = "is_free"
-        case timeRange = "time_range"
-        case busyPeriods = "busy_periods"
-        case calendarsChecked = "calendars_checked"
-        case totalConflicts = "total_conflicts"
-        case recommendations
-    }
 }
 
-// MARK: - Busy Period
+// MARK: - Busy Period (NO CodingKeys - relies on convertFromSnakeCase)
 struct BusyPeriod: Codable {
     let start: String
     let end: String
     let eventId: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case start
-        case end
-        case eventId = "event_id"
-    }
 }

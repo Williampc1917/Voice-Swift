@@ -181,9 +181,16 @@ struct EmailCard: View {
                     
                     // Full email content
                     if let bodyText = email.bodyText, !bodyText.isEmpty {
-                        Text(bodyText)
-                            .font(.callout)
-                            .foregroundColor(.white.opacity(0.8))
+                        // Prefer plain text if available
+                        LinkifiedText(text: bodyText)
+                    } else if let html = email.bodyHtml, !html.isEmpty {
+                        // Just dump raw HTML as plain text for now, lazyyyyyyyyyy
+                        ScrollView(.horizontal) {
+                            Text(html)
+                                .font(.caption2.monospaced())
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.vertical, 4)
+                        }
                     }
                     
                     // Email metadata

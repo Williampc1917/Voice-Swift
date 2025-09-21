@@ -233,6 +233,12 @@ extension APIService {
 // Add this to the BOTTOM of your existing APIService.swift file
 // Make sure you've added GmailModels.swift and CalendarModels.swift files first
 
+// Replace everything after this comment in your APIService.swift:
+// MARK: - Gmail & Calendar API Extensions
+
+// Replace everything after this comment in your APIService.swift:
+// MARK: - Gmail & Calendar API Extensions
+
 extension APIService {
     
     // MARK: - Gmail Methods
@@ -254,15 +260,15 @@ extension APIService {
         return try decoder.decode(GmailStatusResponse.self, from: data)
     }
     
-    /// Get recent Gmail messages
+    /// Get recent Gmail messages with clean logging
     func getGmailMessages(
         accessToken: String,
         maxResults: Int = 10,
         onlyUnread: Bool = false
     ) async throws -> GmailMessagesResponse {
         
+        print("📧 [GMAIL] Fetching \(maxResults) messages, onlyUnread: \(onlyUnread)")
         
-        print("🔑 JWT Token: \(accessToken)")
         var urlComponents = URLComponents(url: AppConfig.backendBaseURL.appendingPathComponent("gmail/messages"), resolvingAgainstBaseURL: false)!
         
         var queryItems: [URLQueryItem] = []
@@ -276,40 +282,89 @@ extension APIService {
         req.httpMethod = "GET"
         req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
-        print("📧 Calling Gmail Messages: \(req.url?.absoluteString ?? "")")
+        print("📧 [GMAIL] Request URL: \(req.url?.absoluteString ?? "")")
         
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
-                                   String(data: data, encoding: .utf8) ?? "")
+            let errorBody = String(data: data, encoding: .utf8) ?? ""
+            let statusCode = (resp as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GMAIL] Error \(statusCode): \(String(errorBody.prefix(200)))")
+            throw APIError.badStatus(statusCode, errorBody)
         }
-        
-        // 🔍 DEBUG: Print the EXACT JSON response
-        let rawJSON = String(data: data, encoding: .utf8) ?? ""
-        print("📧 EXACT JSON Response: \(rawJSON)")
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(GmailMessagesResponse.self, from: data)
+        let response = try decoder.decode(GmailMessagesResponse.self, from: data)
+        
+        // Clean logging - no more massive HTML dumps
+        print("✅ [GMAIL] Loaded \(response.messages.count) messages")
+        print("✅ [GMAIL] Total found: \(response.totalFound ?? -1)")
+        
+        // Log each message summary (no HTML content)
+        for (index, message) in response.messages.enumerated() {
+            print("✅ [GMAIL] Message #\(index + 1):")
+            print("✅ [GMAIL]   - Subject: \(message.subject ?? "No subject")")
+            print("✅ [GMAIL]   - From: \(message.sender.name ?? message.sender.email)")
+            print("✅ [GMAIL]   - Snippet: \(String((message.snippet ?? "").prefix(80)))...")
+            print("✅ [GMAIL]   - Unread: \(message.isUnread ?? false)")
+            print("✅ [GMAIL]   - Labels: \(message.labels?.joined(separator: ", ") ?? "none")")
+            
+            // Show content sizes instead of dumping HTML
+            if let bodyText = message.bodyText {
+                print("✅ [GMAIL]   - Body text: \(bodyText.count) chars")
+            }
+            if let bodyHtml = message.bodyHtml {
+                print("✅ [GMAIL]   - Body HTML: \(bodyHtml.count) chars")
+            }
+        }
+        
+        return response
     }
     
     // MARK: - Calendar Methods
     
     /// Check Calendar connection status
     func getCalendarStatus(accessToken: String) async throws -> CalendarStatusResponse {
+        print("📅 [CALENDAR] Starting calendar status check...")
+        
         var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("calendar/status"))
         req.httpMethod = "GET"
         req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
+        print("📅 [CALENDAR] Request URL: \(req.url?.absoluteString ?? "")")
+        
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
-                                   String(data: data, encoding: .utf8) ?? "")
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIError.badStatus(-1, "No HTTP response")
+        }
+        
+        print("📅 [CALENDAR] Response Status: \(http.statusCode)")
+        
+        // Log raw JSON (truncated)
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📅 [CALENDAR] Raw JSON (first 300 chars): \(String(rawJSON.prefix(300)))")
+        
+        guard (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus(http.statusCode, rawJSON)
         }
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(CalendarStatusResponse.self, from: data)
+        
+        do {
+            let response = try decoder.decode(CalendarStatusResponse.self, from: data)
+            
+            // Log parsed response
+            print("✅ [CALENDAR] Calendar Status:")
+            print("✅ [CALENDAR] - connected: \(response.connected)")
+            print("✅ [CALENDAR] - calendarsAccessible: \(response.calendarsAccessible ?? -1)")
+            print("✅ [CALENDAR] - canCreateEvents: \(response.canCreateEvents ?? false)")
+            
+            return response
+        } catch {
+            print("❌ [CALENDAR] Parsing error: \(error)")
+            throw APIError.decoding("Calendar status parsing failed")
+        }
     }
     
     /// Get upcoming calendar events
@@ -319,6 +374,9 @@ extension APIService {
         maxEvents: Int = 10,
         includeAllDay: Bool = true
     ) async throws -> CalendarEventsResponse {
+        
+        print("📅 [CALENDAR] Fetching events: hoursAhead=\(hoursAhead), maxEvents=\(maxEvents)")
+        
         var urlComponents = URLComponents(url: AppConfig.backendBaseURL.appendingPathComponent("calendar/events"), resolvingAgainstBaseURL: false)!
         
         var queryItems: [URLQueryItem] = []
@@ -333,14 +391,49 @@ extension APIService {
         req.httpMethod = "GET"
         req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
+        print("📅 [CALENDAR] Request URL: \(req.url?.absoluteString ?? "")")
+        
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
-                                   String(data: data, encoding: .utf8) ?? "")
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIError.badStatus(-1, "No HTTP response")
+        }
+        
+        print("📅 [CALENDAR] Response Status: \(http.statusCode)")
+        
+        // Log raw JSON (truncated)
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📅 [CALENDAR] Raw JSON (first 500 chars): \(String(rawJSON.prefix(500)))")
+        
+        guard (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus(http.statusCode, rawJSON)
         }
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(CalendarEventsResponse.self, from: data)
+        
+        do {
+            let response = try decoder.decode(CalendarEventsResponse.self, from: data)
+            
+            // Log parsed response
+            print("✅ [CALENDAR] Events Response:")
+            print("✅ [CALENDAR] - events count: \(response.events.count)")
+            print("✅ [CALENDAR] - totalCount: \(response.totalCount ?? -1)")
+            
+            // Log each event
+            for (index, event) in response.events.enumerated() {
+                print("✅ [CALENDAR] Event #\(index + 1):")
+                print("✅ [CALENDAR]   - summary: \(event.summary ?? "nil")")
+                print("✅ [CALENDAR]   - startTime: \(event.startTime ?? "nil")")
+                print("✅ [CALENDAR]   - endTime: \(event.endTime ?? "nil")")
+                print("✅ [CALENDAR]   - location: \(event.location ?? "nil")")
+                print("✅ [CALENDAR]   - isAllDay: \(event.isAllDay ?? false)")
+                print("✅ [CALENDAR]   - attendeesCount: \(event.attendeesCount ?? 0)")
+            }
+            
+            return response
+        } catch {
+            print("❌ [CALENDAR] Parsing error: \(error)")
+            throw APIError.decoding("Calendar events parsing failed")
+        }
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Gmail Status Response
+// MARK: - Gmail Status Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailStatusResponse: Codable {
     let connected: Bool
     let messagesAccessible: Int?
@@ -18,75 +18,52 @@ struct GmailStatusResponse: Codable {
     let needsRefresh: Bool?
     let healthDetails: GmailHealthDetails?
     let quotaRemaining: GmailQuotaRemaining?
-    
-    enum CodingKeys: String, CodingKey {
-        case connected
-        case messagesAccessible = "messages_accessible"
-        case connectionHealth = "connection_health"
-        case canSendEmail = "can_send_email"
-        case canReadEmail = "can_read_email"
-        case expiresAt = "expires_at"
-        case needsRefresh = "needs_refresh"
-        case healthDetails = "health_details"
-        case quotaRemaining = "quota_remaining"
-    }
 }
 
+// MARK: - Gmail Health Details (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailHealthDetails: Codable {
     let gmailApiConnectivity: String?
     let quotaRemaining: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case gmailApiConnectivity = "gmail_api_connectivity"
-        case quotaRemaining = "quota_remaining"
-    }
 }
 
+struct GmailHealthResponse: Codable {
+    let healthy: Bool
+    let service: String
+    let timestamp: String
+    let googleGmailApi: HealthStatus
+    let oauthTokens: HealthStatus
+    let databaseConnectivity: HealthStatus
+    let supportedOperations: [String]
+    let apiVersion: String
+    let issuesFound: [String]
+    let recommendations: [String]
+}
+
+// MARK: - Gmail Quota Remaining (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailQuotaRemaining: Codable {
     let dailyLimit: Int
     let used: Int
     let remaining: Int
-
-    enum CodingKeys: String, CodingKey {
-        case dailyLimit = "daily_limit"
-        case used
-        case remaining
-    }
 }
 
-// MARK: - Messages List Response (FIXED to match API spec exactly)
+// MARK: - Messages List Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailMessagesResponse: Codable {
     let messages: [GmailMessage]
-    let totalFound: Int?           // Make optional
+    let totalFound: Int?
     let queryParameters: QueryParameters?
-    let hasMore: Bool?             // Make optional
+    let hasMore: Bool?
     let nextPageToken: String?
-
-    enum CodingKeys: String, CodingKey {
-        case messages
-        case totalFound = "total_found"
-        case queryParameters = "query_parameters"
-        case hasMore = "has_more"
-        case nextPageToken = "next_page_token"
-    }
 }
 
-// MARK: - Query Parameters
+// MARK: - Query Parameters (NO CodingKeys - relies on convertFromSnakeCase)
 struct QueryParameters: Codable {
     let maxResults: Int?
     let onlyUnread: Bool?
     let labelIds: [String]?
     let query: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case maxResults = "max_results"
-        case onlyUnread = "only_unread"
-        case labelIds = "label_ids"
-        case query
-    }
 }
 
-// MARK: - Gmail Message (Updated with all fields from API spec)
+// MARK: - Gmail Message (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailMessage: Codable, Identifiable {
     let id: String
     let threadId: String?
@@ -111,62 +88,31 @@ struct GmailMessage: Codable, Identifiable {
     let ageDescription: String?
     let priorityLevel: String?
     let isActionable: Bool?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case threadId = "thread_id"
-        case subject
-        case sender
-        case recipient
-        case cc
-        case bcc
-        case snippet
-        case bodyText = "body_text"
-        case bodyHtml = "body_html"
-        case attachments
-        case labels
-        case isUnread = "is_unread"
-        case isStarred = "is_starred"
-        case isImportant = "is_important"
-        case hasAttachments = "has_attachments"
-        case receivedDatetime = "received_datetime"
-        case senderDisplay = "sender_display"
-        case bodyPreview = "body_preview"
-        case sizeEstimate = "size_estimate"
-        case ageDescription = "age_description"
-        case priorityLevel = "priority_level"
-        case isActionable = "is_actionable"
-    }
 }
+// Alias to clarify that GET /gmail/messages/{message_id} returns one message
+typealias GmailMessageResponse = GmailMessage
 
-// MARK: - Gmail Sender
+// MARK: - Gmail Sender (NO CodingKeys needed - simple fields)
 struct GmailSender: Codable {
     let name: String?
     let email: String
 }
 
-// MARK: - Gmail Recipient
+// MARK: - Gmail Recipient (NO CodingKeys needed - simple fields)
 struct GmailRecipient: Codable {
     let name: String?
     let email: String
 }
 
-// MARK: - Gmail Labels Response
+// MARK: - Gmail Labels Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailLabelsResponse: Codable {
     let labels: [GmailLabel]
     let systemLabels: [GmailLabel]?
     let userLabels: [GmailLabel]?
     let totalCount: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case labels
-        case systemLabels = "system_labels"
-        case userLabels = "user_labels"
-        case totalCount = "total_count"
-    }
 }
 
-// MARK: - Gmail Label
+// MARK: - Gmail Label (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailLabel: Codable, Identifiable {
     let id: String
     let name: String
@@ -177,32 +123,15 @@ struct GmailLabel: Codable, Identifiable {
     let messagesUnread: Int?
     let threadsTotal: Int?
     let threadsUnread: Int?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case displayName = "display_name"
-        case type
-        case isSystem = "is_system"
-        case messagesTotal = "messages_total"
-        case messagesUnread = "messages_unread"
-        case threadsTotal = "threads_total"
-        case threadsUnread = "threads_unread"
-    }
 }
 
-// MARK: - Search Messages Request
+// MARK: - Search Messages Request (NO CodingKeys - relies on convertFromSnakeCase)
 struct SearchMessagesRequest: Codable {
     let query: String
     let maxResults: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case query
-        case maxResults = "max_results"
-    }
 }
 
-// MARK: - Search Results Response
+// MARK: - Search Results Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct SearchResultsResponse: Codable {
     let messages: [GmailMessage]
     let query: String
@@ -211,19 +140,9 @@ struct SearchResultsResponse: Codable {
     let unreadCount: Int
     let highPriorityCount: Int
     let actionableCount: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case messages
-        case query
-        case totalFound = "total_found"
-        case hasMore = "has_more"
-        case unreadCount = "unread_count"
-        case highPriorityCount = "high_priority_count"
-        case actionableCount = "actionable_count"
-    }
 }
 
-// MARK: - Send Email Request
+// MARK: - Send Email Request (NO CodingKeys - relies on convertFromSnakeCase)
 struct SendEmailRequest: Codable {
     let to: [String]
     let subject: String
@@ -232,71 +151,40 @@ struct SendEmailRequest: Codable {
     let bcc: [String]?
     let replyTo: String?
     let replyToMessageId: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case to
-        case subject
-        case body
-        case cc
-        case bcc
-        case replyTo = "reply_to"
-        case replyToMessageId = "reply_to_message_id"
-    }
 }
 
-// MARK: - Send Email Response
+// MARK: - Send Email Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct SendEmailResponse: Codable {
     let success: Bool
     let messageId: String
     let threadId: String
     let message: String
     let recipients: EmailRecipients
-    
-    enum CodingKeys: String, CodingKey {
-        case success
-        case messageId = "message_id"
-        case threadId = "thread_id"
-        case message
-        case recipients
-    }
 }
 
-// MARK: - Email Recipients
+// MARK: - Email Recipients (NO CodingKeys needed - simple fields)
 struct EmailRecipients: Codable {
     let to: [String]
     let cc: [String]
     let bcc: [String]
 }
 
-// MARK: - Modify Message Response
+// MARK: - Modify Message Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct ModifyMessageResponse: Codable {
     let success: Bool
     let message: GmailMessage
     let changesMade: [String]
     let messageText: String
-    
-    enum CodingKeys: String, CodingKey {
-        case success
-        case message
-        case changesMade = "changes_made"
-        case messageText = "message_text"
-    }
 }
 
-// MARK: - Delete Message Response
+// MARK: - Delete Message Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct DeleteMessageResponse: Codable {
     let success: Bool
     let messageId: String
     let message: String
-    
-    enum CodingKeys: String, CodingKey {
-        case success
-        case messageId = "message_id"
-        case message
-    }
 }
 
-// MARK: - Voice Assistant Responses
+// MARK: - Voice Assistant Responses (NO CodingKeys - relies on convertFromSnakeCase)
 struct VoiceInboxSummaryResponse: Codable {
     let unreadCount: Int
     let totalRecent: Int
@@ -304,18 +192,9 @@ struct VoiceInboxSummaryResponse: Codable {
     let actionableCount: Int
     let unreadMessages: [VoiceMessage]
     let voiceSummary: String
-    
-    enum CodingKeys: String, CodingKey {
-        case unreadCount = "unread_count"
-        case totalRecent = "total_recent"
-        case highPriorityCount = "high_priority_count"
-        case actionableCount = "actionable_count"
-        case unreadMessages = "unread_messages"
-        case voiceSummary = "voice_summary"
-    }
 }
 
-// MARK: - Voice Message
+// MARK: - Voice Message (NO CodingKeys needed - simple fields)
 struct VoiceMessage: Codable, Identifiable {
     let id: String
     let subject: String
@@ -326,24 +205,16 @@ struct VoiceMessage: Codable, Identifiable {
     let actionable: Bool?
 }
 
-// MARK: - Voice Today Emails Response
+// MARK: - Voice Today Emails Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct VoiceTodayEmailsResponse: Codable {
     let totalToday: Int
     let unreadToday: Int
     let importantToday: Int
     let messages: [VoiceMessage]
     let voiceSummary: String
-    
-    enum CodingKeys: String, CodingKey {
-        case totalToday = "total_today"
-        case unreadToday = "unread_today"
-        case importantToday = "important_today"
-        case messages
-        case voiceSummary = "voice_summary"
-    }
 }
 
-// MARK: - Gmail Thread Response
+// MARK: - Gmail Thread Response (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailThreadResponse: Codable, Identifiable {
     let id: String
     let snippet: String
@@ -353,15 +224,4 @@ struct GmailThreadResponse: Codable, Identifiable {
     let participants: [[String: String]]
     let latestMessage: GmailMessage?
     let messages: [GmailMessage]
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case snippet
-        case subject
-        case messageCount = "message_count"
-        case hasUnread = "has_unread"
-        case participants
-        case latestMessage = "latest_message"
-        case messages
-    }
 }
