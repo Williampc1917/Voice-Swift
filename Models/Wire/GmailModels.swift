@@ -32,27 +32,25 @@ struct GmailStatusResponse: Codable {
     }
 }
 
-// MARK: - Gmail Health Details
 struct GmailHealthDetails: Codable {
-    let accessTokenValid: Bool?
-    let refreshTokenValid: Bool?
-    let lastActivity: String?
-    
+    let gmailApiConnectivity: String?
+    let quotaRemaining: Int?
+
     enum CodingKeys: String, CodingKey {
-        case accessTokenValid = "access_token_valid"
-        case refreshTokenValid = "refresh_token_valid"
-        case lastActivity = "last_activity"
+        case gmailApiConnectivity = "gmail_api_connectivity"
+        case quotaRemaining = "quota_remaining"
     }
 }
 
-// MARK: - Gmail Quota Remaining
 struct GmailQuotaRemaining: Codable {
-    let dailyQuota: Int?
-    let quotaUsed: Int?
-    
+    let dailyLimit: Int
+    let used: Int
+    let remaining: Int
+
     enum CodingKeys: String, CodingKey {
-        case dailyQuota = "daily_quota"
-        case quotaUsed = "quota_used"
+        case dailyLimit = "daily_limit"
+        case used
+        case remaining
     }
 }
 
@@ -66,7 +64,7 @@ struct GmailMessagesResponse: Codable {
 
     enum CodingKeys: String, CodingKey {
         case messages
-        case totalFound = "total_count"
+        case totalFound = "total_found"
         case queryParameters = "query_parameters"
         case hasMore = "has_more"
         case nextPageToken = "next_page_token"
