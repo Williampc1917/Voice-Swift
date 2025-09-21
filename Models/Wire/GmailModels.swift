@@ -2,7 +2,7 @@
 //  GmailModels.swift
 //  voice-gmail-assistant
 //
-//  Created by William Pineda on 9/20/25.
+//  Updated to match exact backend API specification
 //
 
 import Foundation
@@ -16,6 +16,8 @@ struct GmailStatusResponse: Codable {
     let canReadEmail: Bool?
     let expiresAt: String?
     let needsRefresh: Bool?
+    let healthDetails: GmailHealthDetails?
+    let quotaRemaining: GmailQuotaRemaining?
     
     enum CodingKeys: String, CodingKey {
         case connected
@@ -25,38 +27,68 @@ struct GmailStatusResponse: Codable {
         case canReadEmail = "can_read_email"
         case expiresAt = "expires_at"
         case needsRefresh = "needs_refresh"
+        case healthDetails = "health_details"
+        case quotaRemaining = "quota_remaining"
     }
 }
 
+// MARK: - Gmail Health Details
+struct GmailHealthDetails: Codable {
+    let accessTokenValid: Bool?
+    let refreshTokenValid: Bool?
+    let lastActivity: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case accessTokenValid = "access_token_valid"
+        case refreshTokenValid = "refresh_token_valid"
+        case lastActivity = "last_activity"
+    }
+}
+
+// MARK: - Gmail Quota Remaining
+struct GmailQuotaRemaining: Codable {
+    let dailyQuota: Int?
+    let quotaUsed: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case dailyQuota = "daily_quota"
+        case quotaUsed = "quota_used"
+    }
+}
+
+// MARK: - Messages List Response (FIXED to match API spec exactly)
 struct GmailMessagesResponse: Codable {
     let messages: [GmailMessage]
-    let totalFound: Int
-    let hasMore: Bool
+    let totalFound: Int?           // Make optional
+    let queryParameters: QueryParameters?
+    let hasMore: Bool?             // Make optional
+    let nextPageToken: String?
 
     enum CodingKeys: String, CodingKey {
         case messages
-        case totalFound = "total_found"
+        case totalFound = "total_count"
+        case queryParameters = "query_parameters"
         case hasMore = "has_more"
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        messages = try container.decode([GmailMessage].self, forKey: .messages)
-        hasMore = try container.decode(Bool.self, forKey: .hasMore)
-
-        // tolerate backend sending "total_count"
-        if let found = try? container.decode(Int.self, forKey: .totalFound) {
-            totalFound = found
-        } else {
-            // fallback: manually extract "total_count"
-            let raw = try decoder.singleValueContainer().decode([String: Int].self)
-            totalFound = raw["total_count"] ?? 0
-        }
+        case nextPageToken = "next_page_token"
     }
 }
 
-// MARK: - Gmail Message
+// MARK: - Query Parameters
+struct QueryParameters: Codable {
+    let maxResults: Int?
+    let onlyUnread: Bool?
+    let labelIds: [String]?
+    let query: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case maxResults = "max_results"
+        case onlyUnread = "only_unread"
+        case labelIds = "label_ids"
+        case query
+    }
+}
+
+// MARK: - Gmail Message (Updated with all fields from API spec)
 struct GmailMessage: Codable, Identifiable {
     let id: String
     let threadId: String?
@@ -124,10 +156,14 @@ struct GmailRecipient: Codable {
 // MARK: - Gmail Labels Response
 struct GmailLabelsResponse: Codable {
     let labels: [GmailLabel]
+    let systemLabels: [GmailLabel]?
+    let userLabels: [GmailLabel]?
     let totalCount: Int
     
     enum CodingKeys: String, CodingKey {
         case labels
+        case systemLabels = "system_labels"
+        case userLabels = "user_labels"
         case totalCount = "total_count"
     }
 }
@@ -141,6 +177,8 @@ struct GmailLabel: Codable, Identifiable {
     let isSystem: Bool?
     let messagesTotal: Int?
     let messagesUnread: Int?
+    let threadsTotal: Int?
+    let threadsUnread: Int?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -150,6 +188,8 @@ struct GmailLabel: Codable, Identifiable {
         case isSystem = "is_system"
         case messagesTotal = "messages_total"
         case messagesUnread = "messages_unread"
+        case threadsTotal = "threads_total"
+        case threadsUnread = "threads_unread"
     }
 }
 
@@ -168,7 +208,7 @@ struct SearchMessagesRequest: Codable {
 struct SearchResultsResponse: Codable {
     let messages: [GmailMessage]
     let query: String
-    let totalFound: Int         // backend: "total_found"
+    let totalFound: Int
     let hasMore: Bool
     let unreadCount: Int
     let highPriorityCount: Int
@@ -277,12 +317,18 @@ struct VoiceInboxSummaryResponse: Codable {
     }
 }
 
+// MARK: - Voice Message
 struct VoiceMessage: Codable, Identifiable {
     let id: String
     let subject: String
     let sender: String
+    let preview: String?
+    let age: String?
+    let priority: String?
+    let actionable: Bool?
 }
 
+// MARK: - Voice Today Emails Response
 struct VoiceTodayEmailsResponse: Codable {
     let totalToday: Int
     let unreadToday: Int
@@ -298,11 +344,13 @@ struct VoiceTodayEmailsResponse: Codable {
         case voiceSummary = "voice_summary"
     }
 }
+
+// MARK: - Gmail Thread Response
 struct GmailThreadResponse: Codable, Identifiable {
     let id: String
     let snippet: String
     let subject: String
-    let messageCount: Int   // required
+    let messageCount: Int
     let hasUnread: Bool
     let participants: [[String: String]]
     let latestMessage: GmailMessage?

@@ -273,11 +273,17 @@ extension APIService {
         req.httpMethod = "GET"
         req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
+        print("📧 Calling Gmail Messages: \(req.url?.absoluteString ?? "")")
+        
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
                                    String(data: data, encoding: .utf8) ?? "")
         }
+        
+        // 🔍 DEBUG: Print the EXACT JSON response
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📧 EXACT JSON Response: \(rawJSON)")
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
