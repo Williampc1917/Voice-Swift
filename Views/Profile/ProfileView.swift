@@ -9,87 +9,118 @@ import SwiftUI
 
 struct ProfileView: View {
   @EnvironmentObject var auth: AuthManager
+  @State private var showTestView = false
 
   var body: some View {
-    ZStack {
-      AppBackground() // FROM DESIGN SYSTEM
+    NavigationStack {
+      ZStack {
+        AppBackground() // FROM DESIGN SYSTEM
 
-      VStack(spacing: 36) {
-        Spacer()
-
-        if let p = auth.profile {
-          // Profile content using design system
-          VStack(spacing: 20) {
-            // Avatar
-            Circle()
-              .fill(Color.white.opacity(0.1))
-              .frame(width: 80, height: 80)
-              .overlay(
-                Text(initials(from: p.displayName ?? p.email))
-                  .font(.title.weight(.semibold))
-                  .foregroundColor(.white)
-              )
-              .overlay(
-                Circle()
-                  .strokeBorder(Color.white.opacity(0.2), lineWidth: 2)
-              )
-
-            VStack(spacing: 8) {
-              Text(p.displayName?.isEmpty == false ? p.displayName! : "User")
-                .font(.title.bold())
-                .foregroundColor(.white)
-
-              Text(p.email)
-                .font(.callout)
-                .foregroundColor(.white.opacity(0.85))
-
-              if let plan = p.plan {
-                Text(plan.capitalized)
-                  .font(.footnote.weight(.semibold))
-                  .foregroundColor(.white.opacity(0.9))
-                  .padding(.horizontal, 12)
-                  .padding(.vertical, 6)
-                  .background(
-                    Capsule()
-                      .fill(Color.white.opacity(0.1))
-                      .overlay(
-                        Capsule()
-                          .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                      )
-                  )
-              }
-            }
-          }
-          .appCardStyle() // FROM DESIGN SYSTEM
-          .padding(.horizontal, 24)
-
+        VStack(spacing: 36) {
           Spacer()
 
-          // Sign out button using design system
-          Button {
-            auth.signOut()
-          } label: {
-            Text("Sign Out")
-          }
-          .appButtonStyle() // FROM DESIGN SYSTEM
-          .padding(.horizontal, 24)
-          .padding(.bottom, 44)
+          if let p = auth.profile {
+            // Profile content using design system
+            VStack(spacing: 20) {
+              // Avatar
+              Circle()
+                .fill(Color.white.opacity(0.1))
+                .frame(width: 80, height: 80)
+                .overlay(
+                  Text(initials(from: p.displayName ?? p.email))
+                    .font(.title.weight(.semibold))
+                    .foregroundColor(.white)
+                )
+                .overlay(
+                  Circle()
+                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 2)
+                )
 
-        } else {
-          // Loading state using design system
-          VStack(spacing: 20) {
-            ProgressView()
-              .scaleEffect(1.2)
-              .tint(.blue)
+              VStack(spacing: 8) {
+                Text(p.displayName?.isEmpty == false ? p.displayName! : "User")
+                  .font(.title.bold())
+                  .foregroundColor(.white)
 
-            Text("Loading profile...")
-              .font(.callout)
-              .foregroundColor(.white.opacity(0.85))
+                Text(p.email)
+                  .font(.callout)
+                  .foregroundColor(.white.opacity(0.85))
+
+                if let plan = p.plan {
+                  Text(plan.capitalized)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                      Capsule()
+                        .fill(Color.white.opacity(0.1))
+                        .overlay(
+                          Capsule()
+                            .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                    )
+                }
+              }
+            }
+            .appCardStyle() // FROM DESIGN SYSTEM
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            // Action buttons section
+            VStack(spacing: 16) {
+              // Test Services button
+              Button {
+                showTestView = true
+              } label: {
+                Label("Test Gmail & Calendar", systemImage: "flask")
+              }
+              .appButtonStyle() // FROM DESIGN SYSTEM
+              .padding(.horizontal, 24)
+
+              // Sign out button using design system
+              Button {
+                auth.signOut()
+              } label: {
+                Text("Sign Out")
+              }
+              .appButtonStyle() // FROM DESIGN SYSTEM
+              .padding(.horizontal, 24)
+            }
+            .padding(.bottom, 44)
+
+          } else {
+            // Loading state using design system
+            VStack(spacing: 20) {
+              ProgressView()
+                .scaleEffect(1.2)
+                .tint(.blue)
+
+              Text("Loading profile...")
+                .font(.callout)
+                .foregroundColor(.white.opacity(0.85))
+            }
+            .appCardStyle() // FROM DESIGN SYSTEM
+            .padding(.horizontal, 24)
+            .task { try? await auth.fetchProfile() }
           }
-          .appCardStyle() // FROM DESIGN SYSTEM
-          .padding(.horizontal, 24)
-          .task { try? await auth.fetchProfile() }
         }
+      }
+      .sheet(isPresented: $showTestView) {
+        NavigationStack {
+          GmailCalendarTestView()
+            .toolbar {
+              ToolbarItem(placement: .topBarLeading) {
+                Button("Close") {
+                  showTestView = false
+                }
+                .foregroundColor(.white.opacity(0.85))
+              }
+            }
+        }
+        .presentationDetents([.large])
+        .presentationCornerRadius(20)
+        .presentationBackground(.clear) // Let the dark background show through
       }
     }
   }

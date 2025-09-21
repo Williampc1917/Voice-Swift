@@ -38,7 +38,12 @@ struct GmailCalendarTestView: View {
                     
                     // Gmail Section
                     VStack(spacing: 16) {
-                        SectionHeader(title: "Gmail", icon: "envelope", isLoading: testManager.isLoadingGmail)
+                        SectionHeader(
+                            title: "Gmail",
+                            icon: "envelope",
+                            isLoading: testManager.isLoadingGmail,
+                            isConnected: testManager.gmailConnected
+                        )
                         
                         if testManager.gmailError != nil {
                             ErrorCard(message: testManager.gmailError!)
@@ -53,7 +58,12 @@ struct GmailCalendarTestView: View {
                     
                     // Calendar Section
                     VStack(spacing: 16) {
-                        SectionHeader(title: "Calendar", icon: "calendar", isLoading: testManager.isLoadingCalendar)
+                        SectionHeader(
+                            title: "Calendar",
+                            icon: "calendar",
+                            isLoading: testManager.isLoadingCalendar,
+                            isConnected: testManager.calendarConnected
+                        )
                         
                         if testManager.calendarError != nil {
                             ErrorCard(message: testManager.calendarError!)
@@ -87,11 +97,12 @@ struct GmailCalendarTestView: View {
     }
 }
 
-// MARK: - Section Header
+// MARK: - Section Header with Connection Status
 struct SectionHeader: View {
     let title: String
     let icon: String
     let isLoading: Bool
+    let isConnected: Bool
     
     var body: some View {
         HStack {
@@ -101,6 +112,11 @@ struct SectionHeader: View {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.white)
+                
+                // Connection status indicator
+                Circle()
+                    .fill(isConnected ? Color.green : Color.red)
+                    .frame(width: 8, height: 8)
             }
             
             Spacer()
@@ -115,20 +131,20 @@ struct SectionHeader: View {
     }
 }
 
-// MARK: - Email Card
+// MARK: - Email Card (Updated for Real API Data)
 struct EmailCard: View {
-    let email: MockEmail
+    let email: GmailMessage
     @State private var isExpanded = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Always visible header
             HStack {
-                Text(email.sender)
+                Text(email.sender.name ?? email.sender.email)
                     .font(.subheadline.weight(.medium))
                     .foregroundColor(.white)
                 Spacer()
-                Text(email.time)
+                Text(email.ageDescription ?? "Unknown time")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
                 
@@ -138,12 +154,12 @@ struct EmailCard: View {
                     .font(.caption)
             }
             
-            Text(email.subject)
+            Text(email.subject ?? "No Subject")
                 .font(.callout)
                 .foregroundColor(.white.opacity(0.85))
                 .lineLimit(isExpanded ? nil : 2)
             
-            Text(email.preview)
+            Text(email.snippet ?? "")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.6))
                 .lineLimit(isExpanded ? nil : 2)
@@ -155,45 +171,49 @@ struct EmailCard: View {
                         .background(Color.white.opacity(0.2))
                     
                     // Full email content
-                    Text(email.fullContent)
-                        .font(.callout)
-                        .foregroundColor(.white.opacity(0.8))
+                    if let bodyText = email.bodyText, !bodyText.isEmpty {
+                        Text(bodyText)
+                            .font(.callout)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                     
                     // Email metadata
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text("To:")
+                            Text("From:")
                                 .font(.caption.weight(.medium))
                                 .foregroundColor(.white.opacity(0.6))
-                            Text(email.recipient)
+                            Text(email.sender.email)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.6))
                         }
                         
-                        HStack {
-                            Text("Labels:")
-                                .font(.caption.weight(.medium))
-                                .foregroundColor(.white.opacity(0.6))
-                            
-                            HStack(spacing: 4) {
-                                ForEach(email.labels, id: \.self) { label in
-                                    Text(label)
-                                        .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.3))
-                                        .foregroundColor(.blue)
-                                        .cornerRadius(4)
+                        if let labels = email.labels, !labels.isEmpty {
+                            HStack {
+                                Text("Labels:")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundColor(.white.opacity(0.6))
+                                
+                                HStack(spacing: 4) {
+                                    ForEach(labels.prefix(3), id: \.self) { label in
+                                        Text(label)
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.blue.opacity(0.3))
+                                            .foregroundColor(.blue)
+                                            .cornerRadius(4)
+                                    }
                                 }
                             }
                         }
                         
-                        if !email.attachments.isEmpty {
+                        if email.hasAttachments == true {
                             HStack {
-                                Text("Attachments:")
-                                    .font(.caption.weight(.medium))
+                                Text("Has attachments")
+                                    .font(.caption)
                                     .foregroundColor(.white.opacity(0.6))
-                                Text("\(email.attachments.count) files")
+                                Image(systemName: "paperclip")
                                     .font(.caption)
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -205,7 +225,7 @@ struct EmailCard: View {
             }
             
             HStack {
-                if email.isUnread {
+                if email.isUnread == true {
                     Circle()
                         .fill(.blue)
                         .frame(width: 6, height: 6)
@@ -213,6 +233,13 @@ struct EmailCard: View {
                         .font(.caption2)
                         .foregroundColor(.blue)
                 }
+                
+                if email.isStarred == true {
+                    Image(systemName: "star.fill")
+                        .font(.caption2)
+                        .foregroundColor(.yellow)
+                }
+                
                 Spacer()
                 
                 if !isExpanded {
@@ -231,20 +258,20 @@ struct EmailCard: View {
     }
 }
 
-// MARK: - Event Card
+// MARK: - Event Card (Updated for Real API Data)
 struct EventCard: View {
-    let event: MockEvent
+    let event: CalendarEvent
     @State private var isExpanded = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Always visible header
             HStack {
-                Text(event.title)
+                Text(event.summary ?? "No Title")
                     .font(.subheadline.weight(.medium))
                     .foregroundColor(.white)
                 Spacer()
-                Text(event.date)
+                Text(formatEventDate(event.startTime))
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
                 
@@ -258,17 +285,17 @@ struct EventCard: View {
                 Image(systemName: "clock")
                     .foregroundColor(.white.opacity(0.6))
                     .font(.caption)
-                Text(event.time)
+                Text(formatEventTime(event.startTime, event.endTime, event.isAllDay))
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }
             
-            if !event.location.isEmpty {
+            if let location = event.location, !location.isEmpty {
                 HStack {
                     Image(systemName: "location")
                         .foregroundColor(.white.opacity(0.6))
                         .font(.caption)
-                    Text(event.location)
+                    Text(location)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.6))
                         .lineLimit(isExpanded ? nil : 1)
@@ -282,68 +309,58 @@ struct EventCard: View {
                         .background(Color.white.opacity(0.2))
                     
                     // Event description
-                    if !event.description.isEmpty {
-                        Text(event.description)
+                    if let description = event.description, !description.isEmpty {
+                        Text(description)
                             .font(.callout)
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
-                    // Attendees list
-                    if !event.attendees.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Attendees:")
-                                .font(.caption.weight(.medium))
-                                .foregroundColor(.white.opacity(0.6))
-                            
-                            ForEach(event.attendees, id: \.self) { attendee in
-                                HStack {
-                                    Image(systemName: "person.circle")
-                                        .foregroundColor(.white.opacity(0.4))
-                                        .font(.caption)
-                                    Text(attendee)
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
+                    // Event metadata
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let status = event.status {
+                            HStack {
+                                Text("Status:")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundColor(.white.opacity(0.6))
+                                Text(status.capitalized)
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
                             }
                         }
-                    }
-                    
-                    // Meeting link
-                    if !event.meetingLink.isEmpty {
-                        HStack {
-                            Image(systemName: "video")
-                                .foregroundColor(.blue)
-                                .font(.caption)
-                            Text("Join Meeting")
-                                .font(.caption)
-                                .foregroundColor(.blue)
+                        
+                        if let attendeesCount = event.attendeesCount, attendeesCount > 0 {
+                            HStack {
+                                Text("Attendees:")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundColor(.white.opacity(0.6))
+                                Text("\(attendeesCount) people")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
                         }
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(6)
-                    }
-                    
-                    // Event metadata
-                    HStack {
-                        Text("Created by:")
-                            .font(.caption.weight(.medium))
-                            .foregroundColor(.white.opacity(0.6))
-                        Text(event.organizer)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
+                        
+                        if let timezone = event.timezone {
+                            HStack {
+                                Text("Timezone:")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundColor(.white.opacity(0.6))
+                                Text(timezone)
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
             }
             
             HStack {
-                if !event.attendees.isEmpty && !isExpanded {
+                if event.isAllDay == true {
                     HStack {
-                        Image(systemName: "person.2")
+                        Image(systemName: "calendar")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.caption)
-                        Text("\(event.attendees.count) attendees")
+                        Text("All day")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -363,6 +380,41 @@ struct EventCard: View {
                 isExpanded.toggle()
             }
         }
+    }
+    
+    // Helper functions for date/time formatting
+    private func formatEventDate(_ dateString: String?) -> String {
+        guard let dateString = dateString else { return "Unknown date" }
+        // Simple parsing - you can enhance this
+        if let date = ISO8601DateFormatter().date(from: dateString) {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
+            return formatter.string(from: date)
+        }
+        return "Unknown date"
+    }
+    
+    private func formatEventTime(_ startString: String?, _ endString: String?, _ isAllDay: Bool?) -> String {
+        if isAllDay == true {
+            return "All day"
+        }
+        
+        guard let startString = startString else { return "Unknown time" }
+        
+        if let startDate = ISO8601DateFormatter().date(from: startString) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            var result = formatter.string(from: startDate)
+            
+            if let endString = endString,
+               let endDate = ISO8601DateFormatter().date(from: endString) {
+                result += " - " + formatter.string(from: endDate)
+            }
+            
+            return result
+        }
+        
+        return "Unknown time"
     }
 }
 
@@ -400,41 +452,22 @@ struct EmptyStateCard: View {
     }
 }
 
-// MARK: - Mock Data Models
-struct MockEmail: Identifiable {
-    let id = UUID()
-    let sender: String
-    let subject: String
-    let preview: String
-    let fullContent: String
-    let recipient: String
-    let time: String
-    let isUnread: Bool
-    let labels: [String]
-    let attachments: [String]
-}
-
-struct MockEvent: Identifiable {
-    let id = UUID()
-    let title: String
-    let description: String
-    let date: String
-    let time: String
-    let location: String
-    let attendees: [String]
-    let organizer: String
-    let meetingLink: String
-}
-
-// MARK: - Test Manager
+// MARK: - Updated Test Manager with Real API Calls
 @MainActor
 class GmailCalendarTestManager: ObservableObject {
-    @Published var recentEmails: [MockEmail] = []
-    @Published var upcomingEvents: [MockEvent] = []
+    @Published var recentEmails: [GmailMessage] = []
+    @Published var upcomingEvents: [CalendarEvent] = []
     @Published var isLoadingGmail = false
     @Published var isLoadingCalendar = false
     @Published var gmailError: String?
     @Published var calendarError: String?
+    
+    // Connection status
+    @Published var gmailConnected = false
+    @Published var calendarConnected = false
+    
+    private let api = APIService()
+    private let supabaseSvc = SupabaseService()
     
     var isLoading: Bool {
         isLoadingGmail || isLoadingCalendar
@@ -451,93 +484,97 @@ class GmailCalendarTestManager: ObservableObject {
         await loadInitialData()
     }
     
+    // MARK: - Gmail Data Loading
     private func loadGmailData() async {
         isLoadingGmail = true
         gmailError = nil
+        recentEmails = []
         
-        // Simulate API call
-        try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
-        
-        // Mock data - replace with actual API calls
-        recentEmails = [
-            MockEmail(
-                sender: "GitHub",
-                subject: "New pull request opened",
-                preview: "A new pull request has been opened for voice-gmail-assistant repository...",
-                fullContent: "Hi there! A new pull request #42 has been opened by @contributor123 for the voice-gmail-assistant repository. The PR includes improvements to the OnboardingProfileView styling and adds new animation features. Please review the changes and provide feedback. The automated tests are passing and the code coverage remains at 85%.",
-                recipient: "william@company.com",
-                time: "2 min ago",
-                isUnread: true,
-                labels: ["Work", "GitHub", "Important"],
-                attachments: ["PR_Details.pdf"]
-            ),
-            MockEmail(
-                sender: "Apple Developer",
-                subject: "App Store Connect Weekly Summary",
-                preview: "Here's your weekly summary of app performance and user engagement...",
-                fullContent: "Your apps had 1,247 downloads this week, with the voice-gmail-assistant beta receiving particularly positive feedback. User retention is up 15% compared to last week. The latest build has been approved for TestFlight distribution. Three new crash reports have been submitted - please review them in the crash analytics section.",
-                recipient: "william@company.com",
-                time: "1 hour ago",
-                isUnread: false,
-                labels: ["App Store", "Analytics"],
-                attachments: []
-            ),
-            MockEmail(
-                sender: "Claude AI",
-                subject: "Welcome to Claude Pro",
-                preview: "Thanks for upgrading to Claude Pro! Here's what you can expect...",
-                fullContent: "Welcome to Claude Pro! You now have access to priority bandwidth, extended usage limits, and early access to new features. Your subscription includes unlimited conversations during peak hours and access to our most capable models. We're excited to see what you build with these enhanced capabilities.",
-                recipient: "william@company.com",
-                time: "3 hours ago",
-                isUnread: true,
-                labels: ["Claude", "Subscription"],
-                attachments: ["Getting_Started_Guide.pdf", "Feature_Overview.pdf"]
+        do {
+            // Get access token
+            let token = try await supabaseSvc.currentAccessToken()
+            
+            // Check Gmail connection status first
+            let status = try await api.getGmailStatus(accessToken: token)
+            gmailConnected = status.connected
+            
+            if !status.connected {
+                gmailError = "Gmail not connected"
+                isLoadingGmail = false
+                return
+            }
+            
+            // Fetch recent emails (max 5)
+            let response = try await api.getGmailMessages(
+                accessToken: token,
+                maxResults: 5,
+                onlyUnread: false
             )
-        ]
+            
+            recentEmails = response.messages
+            print("✅ Loaded \(recentEmails.count) Gmail messages")
+            
+        } catch {
+            print("❌ Gmail error: \(error)")
+            gmailConnected = false
+            
+            // Simple error messages
+            if error.localizedDescription.contains("401") || error.localizedDescription.contains("403") {
+                gmailError = "Gmail connection expired"
+            } else if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
+                gmailError = "Network error"
+            } else {
+                gmailError = "Failed to load Gmail data"
+            }
+        }
         
         isLoadingGmail = false
     }
     
+    // MARK: - Calendar Data Loading
     private func loadCalendarData() async {
         isLoadingCalendar = true
         calendarError = nil
+        upcomingEvents = []
         
-        // Simulate API call
-        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-        
-        // Mock data - replace with actual API calls
-        upcomingEvents = [
-            MockEvent(
-                title: "Team Standup",
-                description: "Daily standup meeting to discuss progress, blockers, and plan for the day. Please come prepared with your updates on yesterday's work and today's priorities.",
-                date: "Today",
-                time: "10:00 AM - 10:30 AM",
-                location: "Conference Room A, 2nd Floor",
-                attendees: ["alice@company.com", "bob@company.com", "charlie@company.com"],
-                organizer: "alice@company.com",
-                meetingLink: "https://zoom.us/j/123456789"
-            ),
-            MockEvent(
-                title: "Voice Assistant Demo",
-                description: "Demonstration of the new voice assistant features to stakeholders. We'll showcase the Gmail integration, calendar management, and voice command capabilities. Please prepare the demo environment beforehand.",
-                date: "Tomorrow",
-                time: "2:00 PM - 3:00 PM",
-                location: "Main Conference Room, Executive Floor",
-                attendees: ["stakeholder1@company.com", "stakeholder2@company.com", "ceo@company.com", "william@company.com"],
-                organizer: "william@company.com",
-                meetingLink: "https://zoom.us/j/987654321"
-            ),
-            MockEvent(
-                title: "Code Review Session",
-                description: "Weekly code review session focusing on the OnboardingProfileView refactoring and new design system implementation.",
-                date: "Friday",
-                time: "4:00 PM - 5:00 PM",
-                location: "Development Team Room",
-                attendees: ["dev1@company.com", "dev2@company.com"],
-                organizer: "dev1@company.com",
-                meetingLink: ""
+        do {
+            // Get access token
+            let token = try await supabaseSvc.currentAccessToken()
+            
+            // Check Calendar connection status first
+            let status = try await api.getCalendarStatus(accessToken: token)
+            calendarConnected = status.connected
+            
+            if !status.connected {
+                calendarError = "Calendar not connected"
+                isLoadingCalendar = false
+                return
+            }
+            
+            // Fetch upcoming events (max 5, next 24 hours)
+            let response = try await api.getCalendarEvents(
+                accessToken: token,
+                hoursAhead: 24,
+                maxEvents: 5,
+                includeAllDay: true
             )
-        ]
+            
+            upcomingEvents = response.events
+            print("✅ Loaded \(upcomingEvents.count) Calendar events")
+            
+        } catch {
+            print("❌ Calendar error: \(error)")
+            calendarConnected = false
+            
+            // Simple error messages
+            if error.localizedDescription.contains("401") || error.localizedDescription.contains("403") {
+                calendarError = "Calendar connection expired"
+            } else if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
+                calendarError = "Network error"
+            } else {
+                calendarError = "Failed to load Calendar data"
+            }
+        }
         
         isLoadingCalendar = false
     }

@@ -229,3 +229,109 @@ extension APIService {
         return try decoder.decode(WireOnboardingStatus.self, from: data)
     }
 }
+// MARK: - Gmail & Calendar API Extensions
+// Add this to the BOTTOM of your existing APIService.swift file
+// Make sure you've added GmailModels.swift and CalendarModels.swift files first
+
+extension APIService {
+    
+    // MARK: - Gmail Methods
+    
+    /// Check Gmail connection status
+    func getGmailStatus(accessToken: String) async throws -> GmailStatusResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("gmail/status"))
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                   String(data: data, encoding: .utf8) ?? "")
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(GmailStatusResponse.self, from: data)
+    }
+    
+    /// Get recent Gmail messages
+    func getGmailMessages(
+        accessToken: String,
+        maxResults: Int = 10,
+        onlyUnread: Bool = false
+    ) async throws -> GmailMessagesResponse {
+        var urlComponents = URLComponents(url: AppConfig.backendBaseURL.appendingPathComponent("gmail/messages"), resolvingAgainstBaseURL: false)!
+        
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "max_results", value: String(maxResults)))
+        if onlyUnread {
+            queryItems.append(URLQueryItem(name: "only_unread", value: "true"))
+        }
+        urlComponents.queryItems = queryItems
+        
+        var req = URLRequest(url: urlComponents.url!)
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                   String(data: data, encoding: .utf8) ?? "")
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(GmailMessagesResponse.self, from: data)
+    }
+    
+    // MARK: - Calendar Methods
+    
+    /// Check Calendar connection status
+    func getCalendarStatus(accessToken: String) async throws -> CalendarStatusResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("calendar/status"))
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                   String(data: data, encoding: .utf8) ?? "")
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(CalendarStatusResponse.self, from: data)
+    }
+    
+    /// Get upcoming calendar events
+    func getCalendarEvents(
+        accessToken: String,
+        hoursAhead: Int = 24,
+        maxEvents: Int = 10,
+        includeAllDay: Bool = true
+    ) async throws -> CalendarEventsResponse {
+        var urlComponents = URLComponents(url: AppConfig.backendBaseURL.appendingPathComponent("calendar/events"), resolvingAgainstBaseURL: false)!
+        
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "hours_ahead", value: String(hoursAhead)))
+        queryItems.append(URLQueryItem(name: "max_events", value: String(maxEvents)))
+        if includeAllDay {
+            queryItems.append(URLQueryItem(name: "include_all_day", value: "true"))
+        }
+        urlComponents.queryItems = queryItems
+        
+        var req = URLRequest(url: urlComponents.url!)
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.badStatus((resp as? HTTPURLResponse)?.statusCode ?? -1,
+                                   String(data: data, encoding: .utf8) ?? "")
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(CalendarEventsResponse.self, from: data)
+    }
+}
