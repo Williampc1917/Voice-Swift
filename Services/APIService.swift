@@ -260,6 +260,9 @@ extension APIService {
         maxResults: Int = 10,
         onlyUnread: Bool = false
     ) async throws -> GmailMessagesResponse {
+        
+        
+        print("🔑 JWT Token: \(accessToken)")
         var urlComponents = URLComponents(url: AppConfig.backendBaseURL.appendingPathComponent("gmail/messages"), resolvingAgainstBaseURL: false)!
         
         var queryItems: [URLQueryItem] = []
