@@ -148,7 +148,7 @@ extension APIService {
     }
 
     /// 3. Check Gmail connection status
-    func getGmailStatus(accessToken: String) async throws -> GmailStatusResponse {
+    func getGmailAuthStatus(accessToken: String) async throws -> GmailStatusResponse {
         var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("auth/gmail/status"))
         req.httpMethod = "GET"
         req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")

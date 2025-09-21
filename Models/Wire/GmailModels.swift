@@ -31,7 +31,7 @@ struct GmailStatusResponse: Codable {
 // MARK: - Gmail Messages Response
 struct GmailMessagesResponse: Codable {
     let messages: [GmailMessage]
-    let totalFound: Int
+    let totalCount: Int
     let hasMore: Bool
     
     enum CodingKeys: String, CodingKey {

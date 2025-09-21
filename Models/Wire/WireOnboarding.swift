@@ -57,14 +57,6 @@ struct GmailCallbackResponse: Codable {
     let nextStep: String
 }
 
-struct GmailStatusResponse: Codable {
-    let connected: Bool
-    let provider: String?
-    let scope: String?
-    let expiresAt: String?
-    let needsRefresh: Bool
-}
-
 struct GmailDisconnectResponse: Codable {
     let success: Bool
     let message: String

@@ -222,7 +222,7 @@ final class OnboardingManager: ObservableObject {
         await withLoading {
             print("🔍 [OnboardingManager] Refreshing Gmail connection status…")
             let token = try await self.supabaseSvc.currentAccessToken()
-            let response = try await self.api.getGmailStatus(accessToken: token)
+            let response = try await self.api.getGmailAuthStatus(accessToken: token)
             self.gmailConnected = response.connected
             print("🔍 [OnboardingManager] Gmail status connected=\(self.gmailConnected)")
         }
