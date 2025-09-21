@@ -13,7 +13,9 @@ struct GmailCalendarTestView: View {
     
     var body: some View {
         ZStack {
+            // Background that extends to all edges including safe areas
             AppBackground()
+                .ignoresSafeArea(.all) // This ensures the background covers everything
             
             ScrollView {
                 VStack(spacing: 24) {
@@ -90,6 +92,13 @@ struct GmailCalendarTestView: View {
                 }
                 .padding(.horizontal, 24)
             }
+            
+            
+        }
+        
+        .background {
+            AppBackground()
+                .ignoresSafeArea()
         }
         .task {
             await testManager.loadInitialData()
