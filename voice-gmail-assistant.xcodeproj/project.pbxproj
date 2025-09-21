@@ -15,6 +15,7 @@
 		3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */; };
 		3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54C45D2E6EAE0D00801746 /* Inputs.swift */; };
 		3D54C4602E6F846900801746 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 3D54C45F2E6F846000801746 /* .gitignore */; };
+		3D5B38262E7F2CB8000D6F55 /* GmailCalendarTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */; };
 		3D782F3F2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */; };
 		3D782F412E6E34BC0053BF4F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D782F402E6E34BC0053BF4F /* ContentView.swift */; };
 		3D782F432E6E34BE0053BF4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D782F422E6E34BE0053BF4F /* Assets.xcassets */; };
@@ -64,6 +65,7 @@
 		3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
 		3D54C45D2E6EAE0D00801746 /* Inputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inputs.swift; sourceTree = "<group>"; };
 		3D54C45F2E6F846000801746 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailCalendarTestView.swift; sourceTree = "<group>"; };
 		3D782F3B2E6E34BC0053BF4F /* voice-gmail-assistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "voice-gmail-assistant.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D782F3E2E6E34BC0053BF4F /* voice_gmail_assistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = voice_gmail_assistantApp.swift; sourceTree = "<group>"; };
 		3D782F402E6E34BC0053BF4F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -159,6 +161,14 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		3D5B38242E7F2C98000D6F55 /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */,
+			);
+			path = Testing;
+			sourceTree = "<group>";
+		};
 		3D782F322E6E34BB0053BF4F = {
 			isa = PBXGroup;
 			children = (
@@ -228,6 +238,7 @@
 		3D782F6A2E6E3BDD0053BF4F /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				3D5B38242E7F2C98000D6F55 /* Testing */,
 				3D371D452E7138120093E18F /* Onboarding */,
 				3D54C45C2E6EAE0300801746 /* Components */,
 				3D782F6C2E6E3BEC0053BF4F /* Profile */,
@@ -436,6 +447,7 @@
 				3D782F8E2E6E4A340053BF4F /* Config.swift in Sources */,
 				3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */,
 				3D782F782E6E44870053BF4F /* AuthManager.swift in Sources */,
+				3D5B38262E7F2CB8000D6F55 /* GmailCalendarTestView.swift in Sources */,
 				3D782F722E6E41B80053BF4F /* LoginView.swift in Sources */,
 				3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */,
 				3D371D442E7133000093E18F /* WireOnboarding.swift in Sources */,

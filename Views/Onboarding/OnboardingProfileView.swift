@@ -23,7 +23,7 @@ struct OnboardingProfileView: View {
 
         // Title + subtitle
         VStack(spacing: 10) {
-          Text("What should I call you?")
+            Text("What's your name?")
             .font(.title.bold())
             .foregroundColor(.white)
             .multilineTextAlignment(.center)
