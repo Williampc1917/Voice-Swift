@@ -201,6 +201,13 @@
 			path = Testing;
 			sourceTree = "<group>";
 		};
+		3D6FF0AE2E81CCD300D40A82 /* PureMockViews */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = PureMockViews;
+			sourceTree = "<group>";
+		};
 		3D782F322E6E34BB0053BF4F = {
 			isa = PBXGroup;
 			children = (
@@ -270,6 +277,7 @@
 		3D782F6A2E6E3BDD0053BF4F /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				3D6FF0AE2E81CCD300D40A82 /* PureMockViews */,
 				3D0063462E80CDDC00604989 /* TestingSettings */,
 				3D5B38242E7F2C98000D6F55 /* Testing */,
 				3D371D452E7138120093E18F /* Onboarding */,
