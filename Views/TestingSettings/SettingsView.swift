@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  voice-gmail-assistant
 //
-//  Complete settings view with custom drafting setup
+//  Complete settings view with custom drafting setup and document library
 //
 
 import SwiftUI
@@ -31,7 +31,48 @@ struct SettingsView: View {
     @State private var customStyleConfigured = false
     @State private var showingCustomSetup = false
 
+    // Document Library states
+    @State private var connectedFiles: [ConnectedFile] = []
+    @State private var showingFilePicker = false
+    @State private var isLoadingFiles = false
+
     @State private var safeTop: CGFloat = 0
+    
+    // Mock connected files data
+    let mockFiles: [ConnectedFile] = [
+        ConnectedFile(
+            id: "1",
+            name: "Annual Report 2024.pdf",
+            type: .pdf,
+            lastModified: "2 days ago",
+            hasAccess: true,
+            isRecentlyUsed: true
+        ),
+        ConnectedFile(
+            id: "2",
+            name: "Q3 Budget Analysis.xlsx",
+            type: .excel,
+            lastModified: "1 week ago",
+            hasAccess: false,
+            isRecentlyUsed: false
+        ),
+        ConnectedFile(
+            id: "3",
+            name: "Contract Template.docx",
+            type: .word,
+            lastModified: "3 days ago",
+            hasAccess: true,
+            isRecentlyUsed: true
+        ),
+        ConnectedFile(
+            id: "4",
+            name: "Marketing Presentation.pptx",
+            type: .powerpoint,
+            lastModified: "5 days ago",
+            hasAccess: true,
+            isRecentlyUsed: false
+        )
+    ]
 
     let draftingOptions = ["Professional", "Casual", "Custom"]
     let voiceOptions = ["Assistant Voice", "Companion Voice"]
@@ -84,6 +125,7 @@ struct SettingsView: View {
                         draftingStyleSection
                         voiceSection
                         subscriptionSection
+                        documentLibrarySection
                         connectionStatusSection
                         Color.clear.frame(height: 44)
                     }
@@ -100,6 +142,12 @@ struct SettingsView: View {
                         }
                     }
             }
+            .sheet(isPresented: $showingFilePicker) {
+                GoogleDriveFilePickerView(selectedFiles: $connectedFiles)
+            }
+        }
+        .onAppear {
+            connectedFiles = mockFiles
         }
     }
 
@@ -351,6 +399,144 @@ struct SettingsView: View {
         }
     }
 
+    private var documentLibrarySection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "doc.on.clipboard").foregroundColor(.blue).font(.headline)
+                Text("Document Library").font(.headline).foregroundColor(.white)
+                Spacer()
+            }
+            
+            if connectedFiles.isEmpty {
+                // Empty State
+                VStack(spacing: 16) {
+                    VStack(spacing: 12) {
+                        Image(systemName: "folder.badge.plus")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.3))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color.white.opacity(0.2), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
+                                    .frame(width: 80, height: 80)
+                            )
+                        
+                        VStack(spacing: 4) {
+                            Text("No documents connected")
+                                .font(.callout.weight(.medium))
+                                .foregroundColor(.white.opacity(0.85))
+                            
+                            Text("Connect Google Drive files so your AI can reference and attach them")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    
+                    Button {
+                        showingFilePicker = true
+                    } label: {
+                        Label("Connect Google Drive Files", systemImage: "plus")
+                            .font(.callout.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .appButtonStyle()
+                    .padding(.horizontal, 8)
+                }
+                .appCardStyle()
+            } else {
+                // Files Connected State
+                VStack(spacing: 16) {
+                    // Header with file count
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(connectedFiles.count) files connected")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundColor(.white.opacity(0.85))
+                            
+                            Text("AI can reference and attach these files")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingFilePicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.blue)
+                                .font(.title3)
+                        }
+                    }
+                    
+                    // Files List
+                    VStack(spacing: 12) {
+                        ForEach(connectedFiles) { file in
+                            FileRowView(file: file) { action in
+                                handleFileAction(action, for: file)
+                            }
+                        }
+                    }
+                    
+                    // Bulk Actions
+                    HStack(spacing: 12) {
+                        Button {
+                            // Refresh all permissions
+                            isLoadingFiles = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                isLoadingFiles = false
+                                // Update file access status
+                                connectedFiles = connectedFiles.map { file in
+                                    var updatedFile = file
+                                    updatedFile.hasAccess = true
+                                    return updatedFile
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                if isLoadingFiles {
+                                    ProgressView()
+                                        .scaleEffect(0.7)
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Text("Refresh All")
+                            }
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                        .disabled(isLoadingFiles)
+                        
+                        Button {
+                            connectedFiles.removeAll()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "trash")
+                                Text("Remove All")
+                            }
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.red.opacity(0.8))
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                }
+                .appCardStyle()
+            }
+        }
+    }
+
     private var connectionStatusSection: some View {
         VStack(spacing: 16) {
             HStack {
@@ -390,6 +576,287 @@ struct SettingsView: View {
                 }
             }
             .appCardStyle()
+        }
+    }
+    
+    // MARK: - File Actions
+    private func handleFileAction(_ action: FileAction, for file: ConnectedFile) {
+        switch action {
+        case .view:
+            // Open file preview or external app
+            print("Viewing file: \(file.name)")
+        case .useInEmail:
+            // Navigate to email composer with file attached
+            print("Using file in email: \(file.name)")
+        case .remove:
+            // Remove file access
+            connectedFiles.removeAll { $0.id == file.id }
+        case .refreshAccess:
+            // Refresh file permissions
+            if let index = connectedFiles.firstIndex(where: { $0.id == file.id }) {
+                connectedFiles[index].hasAccess = true
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Models and Views
+
+struct ConnectedFile: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let type: FileType
+    let lastModified: String
+    var hasAccess: Bool
+    let isRecentlyUsed: Bool
+}
+
+enum FileType {
+    case pdf, word, excel, powerpoint, text, image
+    
+    var icon: String {
+        switch self {
+        case .pdf: return "doc.richtext"
+        case .word: return "doc.text"
+        case .excel: return "tablecells"
+        case .powerpoint: return "rectangle.on.rectangle"
+        case .text: return "doc.plaintext"
+        case .image: return "photo"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .pdf: return .red
+        case .word: return .blue
+        case .excel: return .green
+        case .powerpoint: return .orange
+        case .text: return .gray
+        case .image: return .purple
+        }
+    }
+}
+
+enum FileAction {
+    case view, useInEmail, remove, refreshAccess
+}
+
+struct FileRowView: View {
+    let file: ConnectedFile
+    let onAction: (FileAction) -> Void
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // File type icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(file.type.color.opacity(0.2))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: file.type.icon)
+                    .foregroundColor(file.type.color)
+                    .font(.system(size: 16, weight: .medium))
+            }
+            
+            // File info
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(file.name)
+                        .font(.callout)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    
+                    if file.isRecentlyUsed {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 6, height: 6)
+                    }
+                    
+                    Spacer()
+                }
+                
+                HStack(spacing: 8) {
+                    Text(file.lastModified)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    if file.hasAccess {
+                        HStack(spacing: 2) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption)
+                            Text("AI can access")
+                                .font(.caption)
+                                .foregroundColor(.green.opacity(0.8))
+                        }
+                    } else {
+                        HStack(spacing: 2) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                            Text("Access expired")
+                                .font(.caption)
+                                .foregroundColor(.orange.opacity(0.8))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button {
+                onAction(.view)
+            } label: {
+                Label("View File", systemImage: "eye")
+            }
+            
+            if file.hasAccess {
+                Button {
+                    onAction(.useInEmail)
+                } label: {
+                    Label("Use in Email", systemImage: "envelope")
+                }
+            } else {
+                Button {
+                    onAction(.refreshAccess)
+                } label: {
+                    Label("Refresh Access", systemImage: "arrow.clockwise")
+                }
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                onAction(.remove)
+            } label: {
+                Label("Remove Access", systemImage: "trash")
+            }
+        }
+    }
+}
+
+struct GoogleDriveFilePickerView: View {
+    @Binding var selectedFiles: [ConnectedFile]
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var isLoading = false
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppBackground()
+                    .ignoresSafeArea(.all)
+                
+                VStack(spacing: 24) {
+                    // Header
+                    VStack(spacing: 12) {
+                        Image(systemName: "externaldrive.badge.plus")
+                            .font(.system(size: 48, weight: .semibold))
+                            .foregroundColor(.blue)
+                            .shadow(color: Color.blue.opacity(0.25), radius: 10, y: 4)
+                        
+                        VStack(spacing: 8) {
+                            Text("Connect Google Drive")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                            
+                            Text("Select files for your AI assistant to access")
+                                .font(.callout)
+                                .foregroundColor(.white.opacity(0.85))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                        }
+                    }
+                    .padding(.top, 20)
+                    
+                    if isLoading {
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                                .tint(.blue)
+                            
+                            Text("Connecting to Google Drive...")
+                                .font(.callout)
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                        .appCardStyle()
+                        .padding(.horizontal, 24)
+                    } else {
+                        VStack(spacing: 16) {
+                            Text("🔐 Secure Connection")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            VStack(spacing: 12) {
+                                FeatureRow(icon: "checkmark.shield", text: "Read-only access to selected files")
+                                FeatureRow(icon: "eye.slash", text: "No access to your entire drive")
+                                FeatureRow(icon: "lock", text: "Encrypted file references only")
+                                FeatureRow(icon: "person.badge.key", text: "Revoke access anytime")
+                            }
+                        }
+                        .appCardStyle()
+                        .padding(.horizontal, 24)
+                    }
+                    
+                    Spacer()
+                    
+                    // Connect button
+                    if !isLoading {
+                        Button {
+                            isLoading = true
+                            // Mock Google Drive connection
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                // Mock adding some files
+                                let newFiles = [
+                                    ConnectedFile(id: UUID().uuidString, name: "New Document.pdf", type: .pdf, lastModified: "Just now", hasAccess: true, isRecentlyUsed: false),
+                                    ConnectedFile(id: UUID().uuidString, name: "Meeting Notes.docx", type: .word, lastModified: "Just now", hasAccess: true, isRecentlyUsed: false)
+                                ]
+                                selectedFiles.append(contentsOf: newFiles)
+                                dismiss()
+                            }
+                        } label: {
+                            Label("Connect to Google Drive", systemImage: "arrow.right")
+                        }
+                        .appButtonStyle()
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 44)
+                    }
+                }
+            }
+            .navigationTitle("Google Drive")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+        }
+        .presentationBackground(.clear)
+    }
+}
+
+struct FeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.green)
+                .font(.callout)
+                .frame(width: 20)
+            
+            Text(text)
+                .font(.callout)
+                .foregroundColor(.white.opacity(0.85))
+            
+            Spacer()
         }
     }
 }
