@@ -161,7 +161,6 @@
 				3D9488FF2E81F69A00C12C0A /* VoiceChatView3.swift */,
 				3D6FF0AB2E81C0D800D40A82 /* VoiceChatView2.swift */,
 				3D6FF0A92E81BD5200D40A82 /* VoiceChatView.swift */,
-				3D6FF0A72E80FF7C00D40A82 /* CustomDraftingSetupView.swift */,
 				3D0063472E80CDE500604989 /* SettingsView.swift */,
 			);
 			path = TestingSettings;
@@ -181,6 +180,7 @@
 				3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */,
 				3D371D482E7138340093E18F /* OnboardingProfileView.swift */,
 				3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */,
+				3D6FF0A72E80FF7C00D40A82 /* CustomDraftingSetupView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
