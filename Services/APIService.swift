@@ -437,3 +437,229 @@ extension APIService {
         }
     }
 }
+
+// MARK: - Email Style Endpoints
+// Add this extension to the bottom of your existing APIService.swift file
+
+extension APIService {
+    
+    /// Get email style options and current status
+    /// GET /onboarding/email-style
+    func getEmailStyleOptions(accessToken: String) async throws -> EmailStyleStatusResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/email-style"))
+        req.httpMethod = "GET"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        print("📧 [EMAIL_STYLE] Fetching email style options...")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIError.badStatus(-1, "No HTTP response")
+        }
+        
+        print("📧 [EMAIL_STYLE] Response Status: \(http.statusCode)")
+        
+        // Log raw JSON (truncated for debugging)
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📧 [EMAIL_STYLE] Raw JSON (first 300 chars): \(String(rawJSON.prefix(300)))")
+        
+        guard (200...299).contains(http.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? ""
+            print("❌ [EMAIL_STYLE] Error \(http.statusCode): \(String(errorBody.prefix(200)))")
+            throw APIError.badStatus(http.statusCode, errorBody)
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        do {
+            let response = try decoder.decode(EmailStyleStatusResponse.self, from: data)
+            
+            // Log parsed response
+            print("✅ [EMAIL_STYLE] Email Style Status:")
+            print("✅ [EMAIL_STYLE] - currentStep: \(response.currentStep)")
+            print("✅ [EMAIL_STYLE] - styleSelected: \(response.styleSelected ?? "none")")
+            print("✅ [EMAIL_STYLE] - availableOptions: \(response.availableOptions.count)")
+            print("✅ [EMAIL_STYLE] - canAdvance: \(response.canAdvance)")
+            
+            // Log each option
+            for (index, option) in response.availableOptions.enumerated() {
+                print("✅ [EMAIL_STYLE] Option #\(index + 1):")
+                print("✅ [EMAIL_STYLE]   - name: \(option.name)")
+                print("✅ [EMAIL_STYLE]   - available: \(option.available)")
+                if let rateLimit = option.rateLimitInfo {
+                    print("✅ [EMAIL_STYLE]   - canExtract: \(rateLimit.canExtract)")
+                    print("✅ [EMAIL_STYLE]   - used: \(rateLimit.usedToday)/\(rateLimit.dailyLimit)")
+                }
+            }
+            
+            return response
+        } catch {
+            print("❌ [EMAIL_STYLE] Parsing error: \(error)")
+            throw APIError.decoding("Email style options parsing failed: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Select a predefined email style (Casual or Professional)
+    /// PUT /onboarding/email-style
+    func selectPredefinedEmailStyle(
+        accessToken: String,
+        styleType: String
+    ) async throws -> EmailStyleSelectionResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/email-style"))
+        req.httpMethod = "PUT"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["style_type": styleType]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        print("📧 [EMAIL_STYLE] Selecting predefined style: \(styleType)")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIError.badStatus(-1, "No HTTP response")
+        }
+        
+        print("📧 [EMAIL_STYLE] Response Status: \(http.statusCode)")
+        
+        // Log raw JSON
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📧 [EMAIL_STYLE] Raw JSON: \(String(rawJSON.prefix(300)))")
+        
+        guard (200...299).contains(http.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? ""
+            print("❌ [EMAIL_STYLE] Error \(http.statusCode): \(errorBody)")
+            
+            // Handle specific error cases
+            if http.statusCode == 400 {
+                if errorBody.contains("not on email_style step") {
+                    throw APIError.badStatus(http.statusCode, "Not on email style step. Please complete previous steps first.")
+                }
+            }
+            
+            throw APIError.badStatus(http.statusCode, errorBody)
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        do {
+            let response = try decoder.decode(EmailStyleSelectionResponse.self, from: data)
+            
+            // Log parsed response
+            print("✅ [EMAIL_STYLE] Style selected successfully:")
+            print("✅ [EMAIL_STYLE] - styleType: \(response.styleType)")
+            print("✅ [EMAIL_STYLE] - nextStep: \(response.nextStep)")
+            print("✅ [EMAIL_STYLE] - message: \(response.message)")
+            
+            return response
+        } catch {
+            print("❌ [EMAIL_STYLE] Parsing error: \(error)")
+            throw APIError.decoding("Email style selection parsing failed: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Create a custom email style from user examples
+    /// POST /onboarding/email-style/custom
+    func createCustomEmailStyle(
+        accessToken: String,
+        emailExamples: [String]
+    ) async throws -> CustomEmailStyleResponse {
+        var req = URLRequest(url: AppConfig.backendBaseURL.appendingPathComponent("onboarding/email-style/custom"))
+        req.httpMethod = "POST"
+        req.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["email_examples": emailExamples]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        print("📧 [EMAIL_STYLE] Creating custom style with \(emailExamples.count) examples...")
+        
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIError.badStatus(-1, "No HTTP response")
+        }
+        
+        print("📧 [EMAIL_STYLE] Response Status: \(http.statusCode)")
+        
+        // Log raw JSON
+        let rawJSON = String(data: data, encoding: .utf8) ?? ""
+        print("📧 [EMAIL_STYLE] Raw JSON (first 500 chars): \(String(rawJSON.prefix(500)))")
+        
+        // Note: This endpoint can return 200 even on failure (with success: false)
+        // So we need to check the response body, not just status code
+        guard (200...299).contains(http.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? ""
+            print("❌ [EMAIL_STYLE] Error \(http.statusCode): \(errorBody)")
+            
+            // Handle specific error cases
+            if http.statusCode == 400 {
+                if errorBody.contains("not on email_style step") {
+                    throw APIError.badStatus(http.statusCode, "Not on email style step. Please complete previous steps first.")
+                }
+            }
+            
+            throw APIError.badStatus(http.statusCode, errorBody)
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        do {
+            let response = try decoder.decode(CustomEmailStyleResponse.self, from: data)
+            
+            // Log parsed response
+            print("✅ [EMAIL_STYLE] Custom style response:")
+            print("✅ [EMAIL_STYLE] - success: \(response.success)")
+            
+            if response.success {
+                print("✅ [EMAIL_STYLE] - extractionGrade: \(response.extractionGrade ?? "none")")
+                print("✅ [EMAIL_STYLE] - nextStep: \(response.nextStep ?? "none")")
+                
+                if let profile = response.styleProfile {
+                    print("✅ [EMAIL_STYLE] - greeting style: \(profile.greeting.style)")
+                    print("✅ [EMAIL_STYLE] - closing styles: \(profile.closing.styles.joined(separator: ", "))")
+                    print("✅ [EMAIL_STYLE] - formality: \(profile.tone.formality)/5")
+                }
+            } else {
+                print("❌ [EMAIL_STYLE] - error: \(response.errorMessage ?? "unknown error")")
+                
+                if let rateLimitInfo = response.rateLimitInfo {
+                    print("❌ [EMAIL_STYLE] - rate limit: \(rateLimitInfo.used)/\(rateLimitInfo.limit)")
+                    print("❌ [EMAIL_STYLE] - resets at: \(rateLimitInfo.resetTime)")
+                }
+            }
+            
+            return response
+        } catch {
+            print("❌ [EMAIL_STYLE] Parsing error: \(error)")
+            throw APIError.decoding("Custom email style parsing failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Helper Types for Better API Ergonomics
+
+extension APIService {
+    /// Convenience enum for predefined style types
+    enum PredefinedEmailStyle: String {
+        case casual = "casual"
+        case professional = "professional"
+        
+        var displayName: String {
+            rawValue.capitalized
+        }
+    }
+    
+    /// Type-safe wrapper for selecting predefined styles
+    func selectEmailStyle(
+        accessToken: String,
+        style: PredefinedEmailStyle
+    ) async throws -> EmailStyleSelectionResponse {
+        try await selectPredefinedEmailStyle(
+            accessToken: accessToken,
+            styleType: style.rawValue
+        )
+    }
+}

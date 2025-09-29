@@ -17,6 +17,8 @@
 		3D371D492E71383E0093E18F /* OnboardingProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D482E7138340093E18F /* OnboardingProfileView.swift */; };
 		3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */; };
 		3D371D4F2E7141FC0093E18F /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */; };
+		3D42F1DF2E8AD78A003B46C1 /* EmailStyleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D42F1DE2E8AD779003B46C1 /* EmailStyleModels.swift */; };
+		3D42F1E12E8AEABE003B46C1 /* OnboardingEmailStyleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D42F1E02E8AEABB003B46C1 /* OnboardingEmailStyleView.swift */; };
 		3D54C45E2E6EAE1100801746 /* Inputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54C45D2E6EAE0D00801746 /* Inputs.swift */; };
 		3D54C4602E6F846900801746 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 3D54C45F2E6F846000801746 /* .gitignore */; };
 		3D5B38262E7F2CB8000D6F55 /* GmailCalendarTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */; };
@@ -77,6 +79,8 @@
 		3D371D482E7138340093E18F /* OnboardingProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProfileView.swift; sourceTree = "<group>"; };
 		3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGmailView.swift; sourceTree = "<group>"; };
 		3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
+		3D42F1DE2E8AD779003B46C1 /* EmailStyleModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailStyleModels.swift; sourceTree = "<group>"; };
+		3D42F1E02E8AEABB003B46C1 /* OnboardingEmailStyleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingEmailStyleView.swift; sourceTree = "<group>"; };
 		3D54C45D2E6EAE0D00801746 /* Inputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inputs.swift; sourceTree = "<group>"; };
 		3D54C45F2E6F846000801746 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		3D5B38252E7F2CA4000D6F55 /* GmailCalendarTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailCalendarTestView.swift; sourceTree = "<group>"; };
@@ -162,6 +166,7 @@
 				3D6FF0AB2E81C0D800D40A82 /* VoiceChatView2.swift */,
 				3D6FF0A92E81BD5200D40A82 /* VoiceChatView.swift */,
 				3D0063472E80CDE500604989 /* SettingsView.swift */,
+				3D6FF0A72E80FF7C00D40A82 /* CustomDraftingSetupView.swift */,
 			);
 			path = TestingSettings;
 			sourceTree = "<group>";
@@ -176,11 +181,11 @@
 		3D371D452E7138120093E18F /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				3D42F1E02E8AEABB003B46C1 /* OnboardingEmailStyleView.swift */,
 				3D371D4E2E7141F50093E18F /* OnboardingContainerView.swift */,
 				3D371D4A2E71384A0093E18F /* OnboardingGmailView.swift */,
 				3D371D482E7138340093E18F /* OnboardingProfileView.swift */,
 				3D371D462E71381D0093E18F /* OnboardingWelcomeView.swift */,
-				3D6FF0A72E80FF7C00D40A82 /* CustomDraftingSetupView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -319,6 +324,7 @@
 		3D782F922E6E9EF10053BF4F /* Wire */ = {
 			isa = PBXGroup;
 			children = (
+				3D42F1DE2E8AD779003B46C1 /* EmailStyleModels.swift */,
 				3DD220632E7F924E002D87B7 /* CalendarModels.swift */,
 				3DD220612E7F923C002D87B7 /* GmailModels.swift */,
 				3D371D432E7132FA0093E18F /* WireOnboarding.swift */,
@@ -485,6 +491,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D782F942E6E9F020053BF4F /* WireUserProfile.swift in Sources */,
+				3D42F1DF2E8AD78A003B46C1 /* EmailStyleModels.swift in Sources */,
 				3D782F742E6E41D00053BF4F /* SignupView.swift in Sources */,
 				3D00632E2E80A30700604989 /* LinkifiedText.swift in Sources */,
 				3D371D4B2E71384B0093E18F /* OnboardingGmailView.swift in Sources */,
@@ -503,6 +510,7 @@
 				3D782F962E6E9F2A0053BF4F /* WirePlan.swift in Sources */,
 				3D0063322E80A50700604989 /* CleanEmailText.swift in Sources */,
 				3D782F762E6E41ED0053BF4F /* ProfileView.swift in Sources */,
+				3D42F1E12E8AEABE003B46C1 /* OnboardingEmailStyleView.swift in Sources */,
 				3D9489002E81F69C00C12C0A /* VoiceChatView3.swift in Sources */,
 				3DD220622E7F923D002D87B7 /* GmailModels.swift in Sources */,
 				3D7CC5402E7E288A00E0EBA7 /* TransitionCoordinator.swift in Sources */,

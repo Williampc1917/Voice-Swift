@@ -2,6 +2,7 @@
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/9/25.
+//  UPDATED: Added email style selection functionality
 
 import Foundation
 import SwiftUI
@@ -11,6 +12,7 @@ enum OnboardingStep {
     case start
     case profile
     case gmail
+    case emailStyle  // ← NEW: Email style selection step
     case completed
 }
 
@@ -20,6 +22,7 @@ extension OnboardingStep {
         case .start: self = .start
         case .profile: self = .profile
         case .gmail: self = .gmail
+        case .emailStyle: self = .emailStyle  // ← NEW
         case .completed: self = .completed
         }
     }
@@ -37,8 +40,14 @@ final class OnboardingManager: ObservableObject {
     @Published var gmailConnected: Bool = false
     @Published var gmailState: String?
     
-    // New: OAuth completion state
+    // OAuth completion state
     @Published var isProcessingOAuth = false
+    
+    // ← NEW: Email Style-related properties
+    @Published var emailStyleSelected: Bool = false
+    @Published var availableEmailStyles: [EmailStyleOption] = []
+    @Published var currentEmailStyle: String?
+    @Published var canAdvanceFromEmailStyle: Bool = false
 
     private let supabaseSvc = SupabaseService()
     private let api = APIService()
@@ -52,6 +61,12 @@ final class OnboardingManager: ObservableObject {
             self.needsOnboarding = !status.onboardingCompleted
             self.step = OnboardingStep(from: status.step)
             self.gmailConnected = status.gmailConnected
+            
+            // ← NEW: If we're on email_style step, load the options
+            if self.step == .emailStyle {
+                try await self.loadEmailStyleOptionsInternal(token: token)
+            }
+            
             print("🔍 [OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding), gmailConnected=\(self.gmailConnected)")
         }
     }
@@ -96,6 +111,7 @@ final class OnboardingManager: ObservableObject {
     }
 
     // MARK: - Enhanced OAuth Completion (polling-friendly)
+    // ← UPDATED: Now handles go_to_email_style_step
     func completeGmailAuthIfPending() async {
         guard let state = UserDefaults.standard.string(forKey: "gmail_oauth_state") else {
             print("🔍 [OnboardingManager] No pending OAuth state")
@@ -114,7 +130,7 @@ final class OnboardingManager: ObservableObject {
         do {
             let token = try await self.supabaseSvc.currentAccessToken()
             
-            // Step 1: Try to retrieve OAuth data (this might fail if backend hasn't processed it yet)
+            // Step 1: Try to retrieve OAuth data
             let retrieve: GmailRetrieveResponse
             do {
                 retrieve = try await self.api.retrieveGmailOAuthData(accessToken: token, state: state)
@@ -144,8 +160,38 @@ final class OnboardingManager: ObservableObject {
             // Clear any previous errors
             self.errorMessage = nil
             
-            // Update state in a coordinated way to prevent race conditions
-            await self.refreshStatusAndCompleteOnboardingIfReady()
+            // ← NEW: Handle next step action using type-safe enum
+            switch response.nextStepAction {
+            case .goToEmailStyle:
+                print("🔍 [OnboardingManager] Advancing to email style selection")
+                self.gmailConnected = true
+                self.step = .emailStyle
+                // Load email style options immediately
+                await self.loadEmailStyleOptions()
+                
+            case .completed:
+                print("🔍 [OnboardingManager] Onboarding completed")
+                self.gmailConnected = true
+                self.needsOnboarding = false
+                self.step = .completed
+                
+            case .stayOnGmail:
+                print("🔍 [OnboardingManager] Staying on Gmail step (error)")
+                self.errorMessage = response.message
+                
+            case .redirectToMainApp:
+                print("🔍 [OnboardingManager] Redirecting to main app")
+                self.needsOnboarding = false
+                
+            case .goToProfileStep:
+                print("🔍 [OnboardingManager] Going back to profile step")
+                self.step = .profile
+                
+            case .unknown(let value):
+                print("⚠️ [OnboardingManager] Unknown next step: \(value)")
+                // Fallback: refresh status to get current state
+                await self.refreshStatus()
+            }
             
         } catch {
             print("🔍 [OnboardingManager] OAuth error: \(error)")
@@ -167,25 +213,9 @@ final class OnboardingManager: ObservableObject {
                 // Refresh Gmail status to show current state
                 await self.refreshGmailStatus()
             }
-            // For 404 errors during polling, we just exit gracefully without setting errors
         }
         
         self.isProcessingOAuth = false
-    }
-
-    // MARK: - Coordinated status refresh and onboarding completion
-    private func refreshStatusAndCompleteOnboardingIfReady() async {
-        await withLoading {
-            let token = try await self.supabaseSvc.currentAccessToken()
-            let status = try await self.api.getOnboardingStatus(accessToken: token)
-            
-            // Update all state atomically
-            self.gmailConnected = status.gmailConnected
-            self.step = OnboardingStep(from: status.step)
-            self.needsOnboarding = !status.onboardingCompleted
-            
-            print("🔍 [OnboardingManager] Coordinated update → gmailConnected=\(self.gmailConnected), step=\(self.step), needsOnboarding=\(self.needsOnboarding)")
-        }
     }
 
     // MARK: - Manual Continue (for successful OAuth)
@@ -237,6 +267,105 @@ final class OnboardingManager: ObservableObject {
             self.errorMessage = nil
             print("🔍 [OnboardingManager] Gmail disconnected.")
         }
+    }
+
+    // MARK: - ← NEW: Email Style Methods
+    
+    /// Load available email style options
+    func loadEmailStyleOptions() async {
+        await withLoading {
+            print("🔍 [OnboardingManager] Loading email style options…")
+            let token = try await self.supabaseSvc.currentAccessToken()
+            try await self.loadEmailStyleOptionsInternal(token: token)
+        }
+    }
+    
+    /// Internal method to load options without extra loading wrapper
+    private func loadEmailStyleOptionsInternal(token: String) async throws {
+        let response = try await self.api.getEmailStyleOptions(accessToken: token)
+        
+        self.availableEmailStyles = response.availableOptions
+        self.currentEmailStyle = response.styleSelected
+        self.canAdvanceFromEmailStyle = response.canAdvance
+        self.emailStyleSelected = response.styleSelected != nil
+        
+        print("🔍 [OnboardingManager] Email style options loaded:")
+        print("🔍 [OnboardingManager] - Available options: \(self.availableEmailStyles.count)")
+        print("🔍 [OnboardingManager] - Current style: \(self.currentEmailStyle ?? "none")")
+        print("🔍 [OnboardingManager] - Can advance: \(self.canAdvanceFromEmailStyle)")
+    }
+    
+    /// Select a predefined email style (Casual or Professional)
+    func selectPredefinedStyle(_ style: APIService.PredefinedEmailStyle) async {
+        await withLoading {
+            print("🔍 [OnboardingManager] Selecting predefined style: \(style.rawValue)")
+            let token = try await self.supabaseSvc.currentAccessToken()
+            
+            let response = try await self.api.selectEmailStyle(
+                accessToken: token,
+                style: style
+            )
+            
+            print("🔍 [OnboardingManager] Style selected successfully: \(response.styleType)")
+            
+            // Update local state
+            self.currentEmailStyle = response.styleType
+            self.emailStyleSelected = true
+            self.canAdvanceFromEmailStyle = true
+            
+            // Handle next step
+            if response.nextStep == "completed" {
+                print("🔍 [OnboardingManager] Can now complete onboarding")
+                // Mark onboarding as complete
+                self.needsOnboarding = false
+                self.step = .completed
+            }
+        }
+    }
+    
+    /// Create a custom email style from examples
+    func createCustomStyle(emailExamples: [String]) async -> CustomEmailStyleResponse? {
+        var result: CustomEmailStyleResponse?
+        
+        await withLoading {
+            print("🔍 [OnboardingManager] Creating custom email style with \(emailExamples.count) examples")
+            let token = try await self.supabaseSvc.currentAccessToken()
+            
+            let response = try await self.api.createCustomEmailStyle(
+                accessToken: token,
+                emailExamples: emailExamples
+            )
+            
+            result = response
+            
+            if response.success {
+                print("🔍 [OnboardingManager] Custom style created successfully")
+                print("🔍 [OnboardingManager] - Grade: \(response.extractionGrade ?? "unknown")")
+                
+                // Update local state
+                self.currentEmailStyle = "custom"
+                self.emailStyleSelected = true
+                self.canAdvanceFromEmailStyle = true
+                
+                // Handle next step
+                if response.nextStep == "completed" {
+                    print("🔍 [OnboardingManager] Can now complete onboarding")
+                    self.needsOnboarding = false
+                    self.step = .completed
+                }
+            } else {
+                print("🔍 [OnboardingManager] Custom style creation failed: \(response.errorMessage ?? "unknown error")")
+                
+                // Set user-friendly error
+                if response.isRateLimitError {
+                    self.errorMessage = response.friendlyError
+                } else {
+                    self.errorMessage = "Failed to create custom style. Please try again with different email examples."
+                }
+            }
+        }
+        
+        return result
     }
 
     // MARK: - Utility wrapper

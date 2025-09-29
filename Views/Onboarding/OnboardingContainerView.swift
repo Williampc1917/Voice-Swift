@@ -1,9 +1,8 @@
-//
 //  OnboardingContainerView.swift
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/10/25.
-//
+//  UPDATED: Added email style selection step
 
 import SwiftUI
 
@@ -11,8 +10,8 @@ struct OnboardingContainerView: View {
     @EnvironmentObject var onboarding: OnboardingManager
     @State private var currentStepIndex = 0
     
-    // Updated to only include the views that exist
-    private var allSteps: [OnboardingStep] = [.start, .profile, .gmail]
+    // ← UPDATED: Now includes emailStyle step (4 total steps)
+    private var allSteps: [OnboardingStep] = [.start, .profile, .gmail, .emailStyle]
     
     var body: some View {
         ZStack {
@@ -41,11 +40,19 @@ struct OnboardingContainerView: View {
                             insertion: .move(edge: .trailing).combined(with: .opacity),
                             removal: .move(edge: .leading).combined(with: .opacity)
                         ))
+                
+                // ← NEW: Email style selection step
+                case .emailStyle:
+                    OnboardingEmailStyleView()
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
                         
                 case .completed:
                     // If we somehow get to completed step while still in onboarding container,
-                    // just show the Gmail view (which will handle the transition out)
-                    OnboardingGmailView()
+                    // show the email style view (which will handle the transition out)
+                    OnboardingEmailStyleView()
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.8).combined(with: .opacity),
                             removal: .move(edge: .leading).combined(with: .opacity)
@@ -77,26 +84,32 @@ struct OnboardingContainerView: View {
 struct OnboardingProgressView: View {
     let currentStep: OnboardingStep
     
+    // ← UPDATED: Progress values for 4 steps
     private var progress: Float {
         switch currentStep {
-        case .start: return 0.33        // 1/3
-        case .profile: return 0.66      // 2/3
-        case .gmail, .completed: return 1.0  // 3/3 (both gmail and completed show full)
+        case .start: return 0.25        // 1/4
+        case .profile: return 0.5       // 2/4
+        case .gmail: return 0.75        // 3/4
+        case .emailStyle: return 0.95   // 4/4 (almost complete, showing progress)
+        case .completed: return 1.0     // 100%
         }
     }
     
+    // ← UPDATED: Step numbers for 4 steps
     private var stepNumber: Int {
         switch currentStep {
         case .start: return 1
         case .profile: return 2
-        case .gmail, .completed: return 3
+        case .gmail: return 3
+        case .emailStyle: return 4      // ← NEW
+        case .completed: return 4       // Show 4/4 when complete
         }
     }
     
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
             // Step counter with white text
-            Text("\(stepNumber)/3")
+            Text("\(stepNumber)/4")  // ← UPDATED: Now 4 steps total
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.85))
             
