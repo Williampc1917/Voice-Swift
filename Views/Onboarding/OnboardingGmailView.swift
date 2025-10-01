@@ -2,7 +2,7 @@
 //  OnboardingGmailView.swift
 //  voice-gmail-assistant
 //
-//  Created by William Pineda on 9/10/25.
+//  FIXED: Removed race condition between error and success states
 
 import SwiftUI
 
@@ -16,12 +16,12 @@ struct OnboardingGmailView: View {
     
     var body: some View {
         ZStack {
-            AppBackground() // Design system background
+            AppBackground()
 
             VStack(spacing: 36) {
                 Spacer()
 
-                // Header with white text
+                // Header
                 VStack(spacing: 12) {
                     HStack(spacing: 8) {
                         Image(systemName: "envelope.badge")
@@ -49,11 +49,52 @@ struct OnboardingGmailView: View {
 
                 Spacer()
 
-                // Main content area - ALL STATES NOW HAVE CONSISTENT SPACING
+                // Main content area
                 VStack(spacing: 20) {
                     
-                    // Auto-polling state (waiting for OAuth to complete)
-                    if showPollingUI {
+                    // ✅ FIX: Success state takes priority over error state
+                    if onboarding.gmailConnected {
+                        // Success state (Gmail connected successfully)
+                        VStack(spacing: 20) {
+                            VStack(spacing: 16) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.green)
+                                    .shadow(color: Color.green.opacity(0.3), radius: 8, y: 4)
+                                
+                                Text("Google Services Connected!")
+                                    .font(.headline)
+                                    .foregroundColor(.green)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("You can now use voice commands to manage your email and calendar.")
+                                    .font(.callout)
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .multilineTextAlignment(.center)
+                            }
+                            .appCardStyle()
+                            .padding(.horizontal, 24)
+                            
+                            // Continue button
+                            Button {
+                                Task {
+                                    onboarding.needsOnboarding = false
+                                }
+                            } label: {
+                                if onboarding.isLoading {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Label("Continue to App", systemImage: "arrow.right")
+                                }
+                            }
+                            .appButtonStyle(disabled: onboarding.isLoading)
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 44)
+                        }
+                    }
+                    // Auto-polling state (waiting for OAuth)
+                    else if showPollingUI {
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.2)
@@ -69,8 +110,8 @@ struct OnboardingGmailView: View {
                                     .foregroundColor(.white.opacity(0.6))
                             }
                             
-                            // Option to manually refresh if auto-polling is taking too long
-                            if pollAttempts > 6 { // After ~30 seconds
+                            // Manual refresh option after prolonged wait
+                            if pollAttempts > 6 {
                                 Button {
                                     Task {
                                         stopAutoPolling()
@@ -94,11 +135,9 @@ struct OnboardingGmailView: View {
                         .appCardStyle()
                         .padding(.horizontal, 24)
                         
-                        // CONSISTENT SPACING - Add spacer to match other states
                         Spacer().frame(height: 44)
                     }
-                    
-                    // Processing state (when OAuth is completing in background)
+                    // Processing state (OAuth completing)
                     else if onboarding.isProcessingOAuth {
                         VStack(spacing: 16) {
                             ProgressView()
@@ -112,56 +151,11 @@ struct OnboardingGmailView: View {
                         .appCardStyle()
                         .padding(.horizontal, 24)
                         
-                        // CONSISTENT SPACING - Add spacer to match other states
                         Spacer().frame(height: 44)
                     }
-                    
-                    // Success state (Gmail connected successfully)
-                    else if onboarding.gmailConnected && onboarding.errorMessage == nil {
+                    // Error state (connection failed) - only show if NOT connected
+                    else if let error = onboarding.errorMessage, !onboarding.gmailConnected {
                         VStack(spacing: 20) {
-                            // Success message
-                            VStack(spacing: 16) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.green)
-                                    .shadow(color: Color.green.opacity(0.3), radius: 8, y: 4)
-                                
-                                Text("Google Services Connected!")
-                                    .font(.headline)
-                                    .foregroundColor(.green)
-                                    .multilineTextAlignment(.center)
-                                
-                                Text("You can now use voice commands to manage your email and calendar.")
-                                    .font(.callout)
-                                    .foregroundColor(.white.opacity(0.85))
-                                    .multilineTextAlignment(.center)
-                            }
-                            .appCardStyle()
-                            .padding(.horizontal, 24)
-                            
-                            // Continue button using design system
-                            Button {
-                                Task {
-                                    onboarding.needsOnboarding = false
-                                }
-                            } label: {
-                                if onboarding.isLoading {
-                                    ProgressView()
-                                        .tint(.white)
-                                } else {
-                                    Label("Continue to App", systemImage: "arrow.right")
-                                }
-                            }
-                            .appButtonStyle(disabled: onboarding.isLoading)
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 44) // CONSISTENT SPACING
-                        }
-                    }
-                    
-                    // Error state (connection failed)
-                    else if let error = onboarding.errorMessage {
-                        VStack(spacing: 20) {
-                            // Error message
                             VStack(spacing: 16) {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 48))
@@ -180,7 +174,7 @@ struct OnboardingGmailView: View {
                             .appCardStyle()
                             .padding(.horizontal, 24)
                             
-                            // Try again button using design system
+                            // Try again button
                             Button {
                                 Task { await onboarding.retryGmailConnection() }
                             } label: {
@@ -193,14 +187,13 @@ struct OnboardingGmailView: View {
                             }
                             .appButtonStyle(disabled: onboarding.isLoading)
                             .padding(.horizontal, 24)
-                            .padding(.bottom, 44) // CONSISTENT SPACING
+                            .padding(.bottom, 44)
                         }
                     }
-                    
                     // Initial state (ready to connect)
                     else {
                         VStack(spacing: 20) {
-                            // Main connect button using design system
+                            // Main connect button
                             Button {
                                 Task {
                                     await onboarding.startGmailAuth()
@@ -223,14 +216,14 @@ struct OnboardingGmailView: View {
                                 .foregroundColor(.white.opacity(0.6))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 32)
-                                .padding(.bottom, 44) // CONSISTENT SPACING
+                                .padding(.bottom, 44)
                         }
                     }
                 }
             }
         }
         .onAppear {
-            // Check if there's pending OAuth when view appears
+            // Check for pending OAuth when view appears
             if UserDefaults.standard.string(forKey: "gmail_oauth_state") != nil &&
                !onboarding.isProcessingOAuth &&
                !onboarding.gmailConnected {
@@ -239,6 +232,14 @@ struct OnboardingGmailView: View {
         }
         .onDisappear {
             stopAutoPolling()
+        }
+        // ✅ FIX: Clear error message when connection succeeds
+        .onChange(of: onboarding.gmailConnected) { isConnected in
+            if isConnected {
+                // Clear any error message when successfully connected
+                onboarding.errorMessage = nil
+                stopAutoPolling()
+            }
         }
     }
     
@@ -267,9 +268,24 @@ struct OnboardingGmailView: View {
     private func pollForOAuthCompletion() async {
         guard isAutoPolling else { return }
         
+        // ✅ FIX: Check if already processing to prevent duplicate calls
+        guard !onboarding.isProcessingOAuth else {
+            print("🔍 [GmailView] Already processing OAuth, skipping this poll")
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds
+            await pollForOAuthCompletion() // Try again
+            return
+        }
+        
         // Check if we still have pending OAuth state
         guard UserDefaults.standard.string(forKey: "gmail_oauth_state") != nil else {
             print("🔍 [GmailView] No OAuth state found, stopping polling")
+            stopAutoPolling()
+            return
+        }
+        
+        // ✅ FIX: Check if already connected before trying again
+        if onboarding.gmailConnected {
+            print("🔍 [GmailView] Already connected, stopping polling")
             stopAutoPolling()
             return
         }
@@ -281,14 +297,14 @@ struct OnboardingGmailView: View {
         await onboarding.completeGmailAuthIfPending()
         
         // Check if successful
-        if onboarding.gmailConnected || onboarding.errorMessage != nil {
-            print("🔍 [GmailView] OAuth completed or error occurred, stopping polling")
+        if onboarding.gmailConnected {
+            print("🔍 [GmailView] OAuth completed successfully, stopping polling")
             stopAutoPolling()
             return
         }
         
         // Continue polling if we haven't exceeded max attempts
-        if pollAttempts < 20 && isAutoPolling { // Max 2 minutes (20 * 6 seconds)
+        if pollAttempts < 20 && isAutoPolling {
             // Wait before next attempt
             try? await Task.sleep(nanoseconds: 6_000_000_000) // 6 seconds
             
@@ -305,7 +321,6 @@ struct OnboardingGmailView: View {
     OnboardingGmailView()
         .environmentObject({
             let mgr = OnboardingManager()
-            // Default state - ready to connect
             mgr.gmailConnected = false
             mgr.errorMessage = nil
             mgr.isLoading = false
@@ -318,7 +333,6 @@ struct OnboardingGmailView: View {
     OnboardingGmailView()
         .environmentObject({
             let mgr = OnboardingManager()
-            // Success state - Gmail connected
             mgr.gmailConnected = true
             mgr.errorMessage = nil
             mgr.isLoading = false
@@ -331,7 +345,6 @@ struct OnboardingGmailView: View {
     OnboardingGmailView()
         .environmentObject({
             let mgr = OnboardingManager()
-            // Error state - connection failed
             mgr.gmailConnected = false
             mgr.errorMessage = "Failed to connect Gmail. Please check your network connection and try again."
             mgr.isLoading = false

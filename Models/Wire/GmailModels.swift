@@ -63,6 +63,14 @@ struct QueryParameters: Codable {
     let query: String?
 }
 
+// MARK: - Gmail Attachment (NEW - for proper attachment parsing)
+struct GmailAttachment: Codable {
+    let filename: String?
+    let mimeType: String?
+    let size: Int?
+    let attachmentId: String?
+}
+
 // MARK: - Gmail Message (NO CodingKeys - relies on convertFromSnakeCase)
 struct GmailMessage: Codable, Identifiable {
     let id: String
@@ -75,7 +83,7 @@ struct GmailMessage: Codable, Identifiable {
     let snippet: String?
     let bodyText: String?
     let bodyHtml: String?
-    let attachments: [String]?
+    let attachments: [GmailAttachment]?  // ← CHANGED: Was [String]?, now [GmailAttachment]?
     let labels: [String]?
     let isUnread: Bool?
     let isStarred: Bool?

@@ -52,27 +52,29 @@ final class OnboardingManager: ObservableObject {
     private let supabaseSvc = SupabaseService()
     private let api = APIService()
 
-    // MARK: - Check onboarding status
     func refreshStatus() async {
         await withLoading {
             print("🔍 [OnboardingManager] Refreshing onboarding status…")
             let token = try await self.supabaseSvc.currentAccessToken()
             let status = try await self.api.getOnboardingStatus(accessToken: token)
             
-            // CRITICAL: Only set needsOnboarding based on backend status
             self.needsOnboarding = !status.onboardingCompleted
             self.step = OnboardingStep(from: status.step)
             self.gmailConnected = status.gmailConnected
             
-            // If we're on email_style step, load the options
-            if self.step == .emailStyle {
-                try await self.loadEmailStyleOptionsInternal(token: token)
+            // ✅ FIX: Only load email style options if actually on that step
+            if self.step == .emailStyle && !status.onboardingCompleted {
+                do {
+                    try await self.loadEmailStyleOptionsInternal(token: token)
+                } catch {
+                    print("⚠️ [OnboardingManager] Failed to load email style options: \(error)")
+                    // Don't fail the whole refresh, just log the error
+                }
             }
             
             print("🔍 [OnboardingManager] Status → step=\(self.step), needsOnboarding=\(self.needsOnboarding), gmailConnected=\(self.gmailConnected)")
         }
     }
-
     // MARK: - Submit profile name
     func submitDisplayName(_ name: String) async {
         await withLoading {

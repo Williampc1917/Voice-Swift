@@ -13,7 +13,7 @@ struct OnboardingEmailStyleView: View {
     @State private var showCustomStyleSetup = false
     @State private var selectedStyleName: String?
     @State private var showContinueButton = false
-    
+     
     var body: some View {
         ZStack {
             AppBackground()
