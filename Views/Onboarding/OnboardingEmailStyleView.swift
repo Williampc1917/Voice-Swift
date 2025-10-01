@@ -3,6 +3,7 @@
 //  voice-gmail-assistant
 //
 //  Created by William Pineda on 9/29/25.
+//  FINAL: Simple, clean flow with clear button states
 //
 
 import SwiftUI
@@ -11,10 +12,11 @@ struct OnboardingEmailStyleView: View {
     @EnvironmentObject var onboarding: OnboardingManager
     @State private var showCustomStyleSetup = false
     @State private var selectedStyleName: String?
+    @State private var showContinueButton = false
     
     var body: some View {
         ZStack {
-            AppBackground() // Design system background
+            AppBackground()
             
             ScrollView {
                 VStack(spacing: 36) {
@@ -53,10 +55,6 @@ struct OnboardingEmailStyleView: View {
                         .appCardStyle()
                         .padding(.horizontal, 24)
                     }
-                    // Success state (style already selected)
-                    else if onboarding.emailStyleSelected {
-                        SuccessStateView()
-                    }
                     // Main content (style options)
                     else if !onboarding.availableEmailStyles.isEmpty {
                         VStack(spacing: 16) {
@@ -71,6 +69,23 @@ struct OnboardingEmailStyleView: View {
                             }
                         }
                         .padding(.horizontal, 24)
+                        
+                        // Continue button (appears after selection)
+                        if showContinueButton {
+                            Button {
+                                completeOnboarding()
+                            } label: {
+                                if onboarding.isLoading {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Label("Continue to App", systemImage: "arrow.right")
+                                }
+                            }
+                            .appButtonStyle(disabled: onboarding.isLoading)
+                            .padding(.horizontal, 24)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.3), value: showContinueButton)
+                        }
                     }
                     // Error state
                     else if let error = onboarding.errorMessage {
@@ -83,11 +98,14 @@ struct OnboardingEmailStyleView: View {
             .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showCustomStyleSetup) {
-            CustomStyleSetupSheet()
+            CustomStyleSetupSheet(onComplete: {
+                // After custom style completes successfully
+                selectedStyleName = "Custom"
+                showContinueButton = true
+            })
         }
         .task {
-            // Load options when view appears
-            if onboarding.availableEmailStyles.isEmpty && !onboarding.emailStyleSelected {
+            if onboarding.availableEmailStyles.isEmpty {
                 await onboarding.loadEmailStyleOptions()
             }
         }
@@ -97,27 +115,35 @@ struct OnboardingEmailStyleView: View {
     private func handleStyleSelection(_ option: EmailStyleOption) {
         selectedStyleName = option.name
         
-        Task {
-            switch option.name.lowercased() {
-            case "casual":
+        switch option.name.lowercased() {
+        case "casual":
+            Task {
                 await onboarding.selectPredefinedStyle(.casual)
-                
-            case "professional":
-                await onboarding.selectPredefinedStyle(.professional)
-                
-            case "custom":
-                // Check if available (not rate limited)
-                if option.available {
-                    showCustomStyleSetup = true
-                } else {
-                    // Show rate limit error
-                    onboarding.errorMessage = option.rateLimitDisplay ?? "Custom style temporarily unavailable"
-                }
-                
-            default:
-                break
+                showContinueButton = true
             }
+            
+        case "professional":
+            Task {
+                await onboarding.selectPredefinedStyle(.professional)
+                showContinueButton = true
+            }
+            
+        case "custom":
+            if option.available {
+                showCustomStyleSetup = true
+            } else {
+                onboarding.errorMessage = option.rateLimitDisplay ?? "Custom style temporarily unavailable"
+            }
+            
+        default:
+            break
         }
+    }
+    
+    // MARK: - Complete Onboarding
+    private func completeOnboarding() {
+        onboarding.needsOnboarding = false
+        onboarding.step = .completed
     }
 }
 
@@ -130,34 +156,42 @@ struct EmailStyleOptionCard: View {
     var body: some View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 16) {
-                // Header with icon and name
-                HStack {
+                HStack(alignment: .top) {
                     Image(systemName: option.iconName)
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundColor(.blue)
-                        .frame(width: 40)
+                        .frame(width: 40, height: 40)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(option.name)
                             .font(.headline)
                             .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
                         
                         Text(option.description)
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    Spacer()
+                    Spacer(minLength: 0)
                     
-                    // Selection indicator
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.system(size: 24))
+                    // Fixed-size checkmark that doesn't affect layout
+                    ZStack {
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 24, height: 24)
+                        
+                        if isSelected {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.system(size: 24))
+                        }
                     }
+                    .frame(width: 24, height: 24)
                 }
                 
-                // Example preview
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Preview:")
@@ -167,71 +201,49 @@ struct EmailStyleOptionCard: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack {
+                        HStack(alignment: .top) {
                             Text("Greeting:")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.5))
+                                .frame(width: 60, alignment: .leading)
                             Text(option.example.greeting)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         
-                        HStack {
+                        HStack(alignment: .top) {
                             Text("Closing:")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.5))
+                                .frame(width: 60, alignment: .leading)
                             Text(option.example.closing)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         
-                        HStack {
+                        HStack(alignment: .top) {
                             Text("Tone:")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.5))
+                                .frame(width: 60, alignment: .leading)
                             Text(option.example.tone)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(Color.white.opacity(0.03))
                     )
                 }
-                
-                // Rate limit info for custom option
-                if option.name.lowercased() == "custom", let rateLimitInfo = option.rateLimitInfo {
-                    HStack {
-                        Image(systemName: rateLimitInfo.canExtract ? "checkmark.circle.fill" : "clock.fill")
-                            .foregroundColor(rateLimitInfo.canExtract ? .green : .orange)
-                            .font(.caption)
-                        
-                        if rateLimitInfo.canExtract {
-                            Text("\(rateLimitInfo.dailyLimit - rateLimitInfo.usedToday) custom style\(rateLimitInfo.dailyLimit - rateLimitInfo.usedToday == 1 ? "" : "s") remaining today")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.7))
-                        } else {
-                            Text("Daily limit reached • Resets in \(rateLimitInfo.resetCountdown)")
-                                .font(.caption)
-                                .foregroundColor(.orange.opacity(0.9))
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.top, 4)
-                }
-                
-                // Unavailable overlay
-                if !option.available {
-                    Text("Try Casual or Professional instead")
-                        .font(.caption)
-                        .foregroundColor(.orange.opacity(0.9))
-                        .padding(.top, 4)
-                }
             }
             .padding(20)
+            .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(isSelected ? Color.blue.opacity(0.15) : Color.white.opacity(0.05))
@@ -248,51 +260,6 @@ struct EmailStyleOptionCard: View {
         }
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-}
-
-// MARK: - Success State View
-struct SuccessStateView: View {
-    @EnvironmentObject var onboarding: OnboardingManager
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            // Success message
-            VStack(spacing: 16) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.green)
-                    .shadow(color: Color.green.opacity(0.3), radius: 8, y: 4)
-                
-                Text("Email Style Selected!")
-                    .font(.headline)
-                    .foregroundColor(.green)
-                
-                if let styleName = onboarding.currentEmailStyle {
-                    Text("You've chosen the \(styleName.capitalized) style")
-                        .font(.callout)
-                        .foregroundColor(.white.opacity(0.85))
-                        .multilineTextAlignment(.center)
-                }
-                
-                Text("Your assistant will now write emails in your preferred style.")
-                    .font(.callout)
-                    .foregroundColor(.white.opacity(0.85))
-                    .multilineTextAlignment(.center)
-            }
-            .appCardStyle()
-            .padding(.horizontal, 24)
-            
-            // Continue button
-            Button {
-                // Onboarding is automatically marked complete by the manager
-                // The app will transition to the main view
-            } label: {
-                Label("Continue to App", systemImage: "arrow.right")
-            }
-            .appButtonStyle(disabled: onboarding.isLoading)
-            .padding(.horizontal, 24)
-        }
     }
 }
 
@@ -321,11 +288,8 @@ struct ErrorStateView: View {
             .appCardStyle()
             .padding(.horizontal, 24)
             
-            // Retry button
             Button {
-                Task {
-                    await onboarding.loadEmailStyleOptions()
-                }
+                Task { await onboarding.loadEmailStyleOptions() }
             } label: {
                 Label("Try Again", systemImage: "arrow.clockwise")
             }
@@ -339,9 +303,9 @@ struct ErrorStateView: View {
 struct CustomStyleSetupSheet: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var onboarding: OnboardingManager
+    let onComplete: () -> Void
     
     @State private var emailExamples = ["", "", ""]
-    @State private var currentExampleIndex = 0
     @State private var isProcessing = false
     @State private var extractionResult: CustomEmailStyleResponse?
     @State private var showResult = false
@@ -349,12 +313,10 @@ struct CustomStyleSetupSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppBackground()
-                    .ignoresSafeArea()
+                AppBackground().ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 32) {
-                        // Header
                         VStack(spacing: 16) {
                             Image(systemName: "brain.head.profile")
                                 .font(.system(size: 48, weight: .semibold))
@@ -375,21 +337,25 @@ struct CustomStyleSetupSheet: View {
                         }
                         .padding(.top, 20)
                         
-                        // Show result if extraction is complete
                         if showResult, let result = extractionResult {
-                            CustomStyleResultView(result: result, onDismiss: {
-                                dismiss()
-                            })
-                        }
-                        // Show input form
-                        else {
+                            CustomStyleResultView(
+                                result: result,
+                                onContinue: {
+                                    dismiss()
+                                    onComplete()
+                                },
+                                onRetry: {
+                                    // Reset to step 1
+                                    showResult = false
+                                    extractionResult = nil
+                                    emailExamples = ["", "", ""]
+                                }
+                            )
+                        } else {
                             CustomStyleInputForm(
                                 emailExamples: $emailExamples,
-                                currentExampleIndex: $currentExampleIndex,
                                 isProcessing: $isProcessing,
-                                onSubmit: {
-                                    await submitCustomStyle()
-                                }
+                                onSubmit: { await submitCustomStyle() }
                             )
                         }
                         
@@ -401,11 +367,9 @@ struct CustomStyleSetupSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.white.opacity(0.85))
-                    .disabled(isProcessing)
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.white.opacity(0.85))
+                        .disabled(isProcessing)  // ← Disable cancel during AI processing
                 }
             }
         }
@@ -413,24 +377,13 @@ struct CustomStyleSetupSheet: View {
     
     private func submitCustomStyle() async {
         isProcessing = true
-        
-        // Filter out empty examples
         let validExamples = emailExamples.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        
         let result = await onboarding.createCustomStyle(emailExamples: validExamples)
-        
         isProcessing = false
         
         if let result = result {
             extractionResult = result
             showResult = true
-            
-            // Auto-dismiss on success after a delay
-            if result.success {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    dismiss()
-                }
-            }
         }
     }
 }
@@ -438,243 +391,228 @@ struct CustomStyleSetupSheet: View {
 // MARK: - Custom Style Input Form
 struct CustomStyleInputForm: View {
     @Binding var emailExamples: [String]
-    @Binding var currentExampleIndex: Int
     @Binding var isProcessing: Bool
     let onSubmit: () async -> Void
     
     @State private var emailSubjects = ["", "", ""]
     @State private var emailBodies = ["", "", ""]
     @State private var currentStep = 0
+    @State private var animationPhase = 0.0
     
-    let sampleTitles = [
-        "Professional Email",
-        "Follow-up Email",
-        "Casual Email"
-    ]
-    
-    let sampleDescriptions = [
-        "Paste a formal business email you've written, or use the example for inspiration.",
-        "Provide a reply or follow-up email, or draft one using the scenario below.",
-        "Include a casual or internal team email — real or roleplay."
+    let titles = ["Professional Email", "Follow-up Email", "Casual Email"]
+    let descriptions = [
+        "Enter a formal business email",
+        "Enter a reply or follow-up email",
+        "Enter a casual or internal team email"
     ]
     
     private var canProceed: Bool {
-        let subject = emailSubjects[currentStep].trimmingCharacters(in: .whitespacesAndNewlines)
-        let body = emailBodies[currentStep]
-        return !subject.isEmpty && sentenceCount(in: body) >= 3
-    }
-    
-    private var canSubmit: Bool {
-        // Check if all 3 emails have both subject and body with at least 3 sentences
-        for i in 0..<3 {
-            let subject = emailSubjects[i].trimmingCharacters(in: .whitespacesAndNewlines)
-            let body = emailBodies[i]
-            if subject.isEmpty || sentenceCount(in: body) < 3 {
-                return false
-            }
-        }
-        return true
+        !emailSubjects[currentStep].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        sentenceCount(in: emailBodies[currentStep]) >= 3
     }
     
     private func sentenceCount(in text: String) -> Int {
-        let sentences = text.split { ".!?".contains($0) }
-        return sentences.count
+        text.split { ".!?".contains($0) }.count
     }
     
     var body: some View {
         VStack(spacing: 20) {
-            // Progress indicator with connected lines
-            VStack(spacing: 12) {
-                HStack {
-                    ForEach(0..<3, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentStep ? Color.blue : (hasCompletedStep(index) ? Color.blue : Color.white.opacity(0.3)))
-                            .frame(width: 12, height: 12)
+            // 🔄 SHOW LOADING STATE WHILE PROCESSING
+            if isProcessing {
+                Spacer()
+                
+                VStack(spacing: 24) {
+                    // Animated brain icon
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 64, weight: .semibold))
+                        .foregroundColor(.blue)
+                        .scaleEffect(1.0 + sin(animationPhase) * 0.1)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 12, y: 6)
+                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: animationPhase)
+                        .onAppear { animationPhase = 1.0 }
+                    
+                    // Progress spinner
+                    ProgressView()
+                        .scaleEffect(1.3)
+                        .tint(.blue)
+                    
+                    VStack(spacing: 8) {
+                        Text("Analyzing Your Writing Style...")
+                            .font(.title3.bold())
+                            .foregroundColor(.white)
                         
-                        if index < 2 {
-                            Rectangle()
-                                .fill(index < currentStep ? Color.blue : Color.white.opacity(0.3))
-                                .frame(height: 2)
-                        }
+                        Text("This usually takes 10-30 seconds")
+                            .font(.callout)
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("Our AI is reading your emails to learn your unique style")
+                            .font(.footnote)
+                            .foregroundColor(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                            .padding(.top, 4)
                     }
                 }
-                .padding(.horizontal, 40)
+                .appCardStyle()
                 
-                Text("Sample \(currentStep + 1) of 3")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            
-            // Current sample info
-            VStack(spacing: 8) {
-                Text(sampleTitles[currentStep])
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Text(sampleDescriptions[currentStep])
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-            }
-            
-            // Subject input
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Subject")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.white.opacity(0.85))
+                Spacer()
+            } else {
+                // 📝 SHOW WIZARD FORM WHEN NOT PROCESSING
+                // 📝 SHOW WIZARD FORM WHEN NOT PROCESSING
+                // Progress indicator
+                VStack(spacing: 12) {
+                    HStack {
+                        ForEach(0..<3, id: \.self) { i in
+                            Circle()
+                                .fill(i == currentStep ? Color.blue : (hasCompleted(i) ? Color.blue : Color.white.opacity(0.3)))
+                                .frame(width: 12, height: 12)
+                            if i < 2 {
+                                Rectangle()
+                                    .fill(i < currentStep ? Color.blue : Color.white.opacity(0.3))
+                                    .frame(height: 2)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 40)
                     
-                    Spacer()
-                    
-                    Text("\(emailSubjects[currentStep].count)/100")
+                    Text("Email \(currentStep + 1) of 3")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.6))
                 }
                 
-                TextField("Enter subject line", text: $emailSubjects[currentStep])
-                    .textFieldStyle(.plain)
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.white.opacity(0.05))
-                    )
-                    .foregroundColor(.white)
-            }
-            .appCardStyle()
-            
-            // Body input
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Body")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.white.opacity(0.85))
-                    
-                    Spacer()
-                    
-                    Text("\(emailBodies[currentStep].count)/500")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                VStack(spacing: 8) {
+                    Text(titles[currentStep])
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(descriptions[currentStep])
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
                 }
                 
-                TextEditor(text: $emailBodies[currentStep])
-                    .font(.callout)
-                    .foregroundColor(.white)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .frame(minHeight: 140)
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.white.opacity(0.05))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-                            )
-                    )
-                
-                if emailBodies[currentStep].isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Example:")
-                            .font(.caption.weight(.medium))
+                // Subject input
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Subject")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.white.opacity(0.85))
+                        Spacer()
+                        Text("\(emailSubjects[currentStep].count)/100")
+                            .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
-                        
-                        Text(getPlaceholderBody())
+                    }
+                    
+                    TextField("Enter subject line", text: $emailSubjects[currentStep])
+                        .textFieldStyle(.plain)
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white.opacity(0.05)))
+                        .foregroundColor(.white)
+                }
+                .appCardStyle()
+                
+                // Body input
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Body (minimum 3 sentences)")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.white.opacity(0.85))
+                        Spacer()
+                        Text("\(emailBodies[currentStep].count)/500")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
+                    TextEditor(text: $emailBodies[currentStep])
+                        .font(.callout)
+                        .foregroundColor(.white)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .frame(minHeight: 140)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.white.opacity(0.05))
+                                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                        )
+                    
+                    if emailBodies[currentStep].isEmpty {
+                        Text("Example: \(getExample())")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.4))
                             .italic()
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            .appCardStyle()
-            
-            // Guidance tip
-            Text("Tip: Minimum 3 sentences per body for best results.")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            // Navigation buttons
-            HStack(spacing: 16) {
-                if currentStep > 0 {
-                    Button("Previous") {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentStep -= 1
+                .appCardStyle()
+                
+                Text("💡 Provide exactly 3 different emails with at least 3 sentences each")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                
+                // Navigation buttons
+                HStack(spacing: 16) {
+                    if currentStep > 0 {
+                        Button("Previous") {
+                            withAnimation { currentStep -= 1 }
+                        }
+                        .font(.callout.weight(.medium))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.2), lineWidth: 1))
+                    }
+                    
+                    Button(currentStep == 2 ? "Analyze My Style" : "Next") {
+                        if currentStep == 2 {
+                            // Combine subject + body
+                            for i in 0..<3 {
+                                emailExamples[i] = "Subject: \(emailSubjects[i])\n\n\(emailBodies[i])"
+                            }
+                            Task { await onSubmit() }
+                        } else {
+                            withAnimation { currentStep += 1 }
                         }
                     }
-                    .font(.callout.weight(.medium))
-                    .foregroundColor(.white.opacity(0.85))
+                    .font(.callout.weight(.semibold))
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                    )
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(canProceed ? Color.blue : Color.white.opacity(0.2)))
+                    .disabled(!canProceed || isProcessing)
                 }
-                
-                Button(currentStep == 2 ? "Analyze My Style" : "Next") {
-                    if currentStep == 2 {
-                        // Combine subject + body for each email
-                        for i in 0..<3 {
-                            emailExamples[i] = "Subject: \(emailSubjects[i])\n\n\(emailBodies[i])"
-                        }
-                        
-                        Task {
-                            await onSubmit()
-                        }
-                    } else {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentStep += 1
-                        }
-                    }
-                }
-                .font(.callout.weight(.semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(canProceed ? Color.blue : Color.white.opacity(0.2))
-                )
-                .disabled(!canProceed || isProcessing)
-                .animation(.easeInOut(duration: 0.2), value: canProceed)
             }
         }
     }
     
-    private func hasCompletedStep(_ index: Int) -> Bool {
-        let subject = emailSubjects[index].trimmingCharacters(in: .whitespacesAndNewlines)
-        let body = emailBodies[index]
-        return !subject.isEmpty && sentenceCount(in: body) >= 3
+    private func hasCompleted(_ i: Int) -> Bool {
+        !emailSubjects[i].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        sentenceCount(in: emailBodies[i]) >= 3
     }
     
-    private func getPlaceholderBody() -> String {
-        switch currentStep {
-        case 0:
-            return "Hi Sarah,\n\nI wanted to follow up on the project timeline we discussed. Could you please send me the updated requirements by Friday?\n\nBest regards,\nJohn"
-        case 1:
-            return "Thanks for the quick response! I've reviewed the document and have a few questions. Would you be available for a brief call tomorrow?\n\nThanks,\nJohn"
-        case 2:
-            return "Hey team!\n\nGreat work on the launch today. Pizza's on me for the celebration. See you all tomorrow!\n\nCheers,\nJohn"
-        default:
-            return ""
-        }
+    private func getExample() -> String {
+        ["Hi Sarah, I wanted to follow up on the project timeline. Could you send me the updated requirements by Friday? Best regards, John",
+         "Thanks for the quick response! I've reviewed the document. Would you be available for a brief call tomorrow? Thanks, John",
+         "Hey team! Great work on the launch today. Pizza's on me for the celebration. See you all tomorrow! Cheers, John"][currentStep]
     }
 }
 
 // MARK: - Custom Style Result View
 struct CustomStyleResultView: View {
     let result: CustomEmailStyleResponse
-    let onDismiss: () -> Void
+    let onContinue: () -> Void
+    let onRetry: () -> Void
+    @EnvironmentObject var onboarding: OnboardingManager
     
     var body: some View {
         VStack(spacing: 20) {
             if result.success {
-                // Success
+                // SUCCESS STATE
                 VStack(spacing: 16) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 48))
                         .foregroundColor(.green)
+                        .shadow(color: Color.green.opacity(0.3), radius: 8, y: 4)
                     
                     Text("Style Captured!")
                         .font(.headline)
@@ -686,14 +624,28 @@ struct CustomStyleResultView: View {
                             .foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.center)
                     }
+                    
+                    Text("Your assistant will now write emails in your personal style.")
+                        .font(.callout)
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
                 }
                 .appCardStyle()
+                
+                Button {
+                    onContinue()
+                } label: {
+                    Label("Continue to App", systemImage: "arrow.right")
+                }
+                .appButtonStyle()
+                
             } else {
-                // Error
+                // ERROR STATE
                 VStack(spacing: 16) {
                     Image(systemName: result.isRateLimitError ? "clock.fill" : "exclamationmark.triangle.fill")
                         .font(.system(size: 48))
                         .foregroundColor(.orange)
+                        .shadow(color: Color.orange.opacity(0.3), radius: 8, y: 4)
                     
                     Text(result.isRateLimitError ? "Daily Limit Reached" : "Unable to Analyze")
                         .font(.headline)
@@ -703,14 +655,20 @@ struct CustomStyleResultView: View {
                         .font(.callout)
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
+                    
+                    if result.isRateLimitError {
+                        Text("Try selecting Casual or Professional style instead, or come back tomorrow.")
+                            .font(.footnote)
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    }
                 }
                 .appCardStyle()
                 
-                // Dismiss button for errors
                 Button {
-                    onDismiss()
+                    onRetry()
                 } label: {
-                    Text("OK")
+                    Text(result.isRateLimitError ? "Choose Different Style" : "Try Different Examples")
                 }
                 .appButtonStyle()
             }
@@ -718,17 +676,9 @@ struct CustomStyleResultView: View {
     }
 }
 
-#Preview("Initial State") {
-    OnboardingEmailStyleView()
-        .environmentObject({
-            let mgr = OnboardingManager()
-            mgr.availableEmailStyles = []
-            mgr.emailStyleSelected = false
-            return mgr
-        }())
-}
+// MARK: - Previews
 
-#Preview("With Options") {
+#Preview("1. Choose Email Style") {
     OnboardingEmailStyleView()
         .environmentObject({
             let mgr = OnboardingManager()
@@ -752,9 +702,85 @@ struct CustomStyleResultView: View {
                     description: "Personalized style learned from your emails",
                     example: EmailStyleExample(greeting: "Based on your writing", closing: "Matches your preferences", tone: "Uniquely yours"),
                     available: true,
-                    rateLimitInfo: RateLimitInfo(canExtract: true, usedToday: 0, dailyLimit: 2, hoursUntilReset: 18.5)
+                    rateLimitInfo: nil
                 )
             ]
             return mgr
         }())
+}
+
+#Preview("2. Custom Style Wizard - Step 1") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            CustomStyleInputForm(
+                emailExamples: .constant(["", "", ""]),
+                isProcessing: .constant(false),
+                onSubmit: {}
+            )
+            .padding()
+        }
+    }
+}
+
+#Preview("2b. AI Processing - Loading State 🔄") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            CustomStyleInputForm(
+                emailExamples: .constant(["", "", ""]),
+                isProcessing: .constant(true),  // ← Shows loading state
+                onSubmit: {}
+            )
+            .padding()
+        }
+    }
+}
+
+#Preview("3. Custom Style - Success") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            CustomStyleResultView(
+                result: CustomEmailStyleResponse(
+                    success: true,
+                    styleProfile: StyleProfile(
+                        greeting: GreetingStyle(style: "casual", warmth: "high"),
+                        closing: ClosingStyle(styles: ["Thanks", "Cheers"], includesName: true),
+                        tone: ToneStyle(formality: 2, directness: 4, enthusiasm: 4, politeness: 3)
+                    ),
+                    extractionGrade: "A",
+                    errorMessage: nil,
+                    rateLimitInfo: nil,
+                    nextStep: "completed"
+                ),
+                onContinue: {},
+                onRetry: {}
+            )
+            .environmentObject(OnboardingManager())
+            .padding()
+        }
+    }
+}
+
+#Preview("4. Custom Style - Error") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            CustomStyleResultView(
+                result: CustomEmailStyleResponse(
+                    success: false,
+                    styleProfile: nil,
+                    extractionGrade: "C",
+                    errorMessage: "Unable to extract a consistent writing style. Please provide more varied emails.",
+                    rateLimitInfo: nil,
+                    nextStep: nil
+                ),
+                onContinue: {},
+                onRetry: {}
+            )
+            .environmentObject(OnboardingManager())
+            .padding()
+        }
+    }
 }
