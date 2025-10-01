@@ -321,11 +321,7 @@ final class OnboardingManager: ObservableObject {
             
             // ✅ CRITICAL FIX: Don't set needsOnboarding here!
             // Let refreshStatus() handle it after backend confirms completion
-            if response.nextStep == "completed" {
-                print("🔍 [OnboardingManager] Backend says onboarding is complete, refreshing status")
-                // Refresh status to get the actual completion state from backend
-                await self.refreshStatus()
-            }
+            print("🔍 [OnboardingManager] Style selected: \(response.styleType)")
         }
     }
     
@@ -355,11 +351,7 @@ final class OnboardingManager: ObservableObject {
                 
                 // ✅ CRITICAL FIX: Don't set needsOnboarding here!
                 // Let refreshStatus() handle it after backend confirms completion
-                if response.nextStep == "completed" {
-                    print("🔍 [OnboardingManager] Backend says onboarding is complete, refreshing status")
-                    // Refresh status to get the actual completion state from backend
-                    await self.refreshStatus()
-                }
+                print("🔍 [OnboardingManager] Custom style ready, waiting for user to continue")
             } else {
                 print("🔍 [OnboardingManager] Custom style creation failed: \(response.errorMessage ?? "unknown error")")
                 

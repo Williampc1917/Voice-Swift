@@ -2,8 +2,7 @@
 //  OnboardingEmailStyleView.swift
 //  voice-gmail-assistant
 //
-//  Created by William Pineda on 9/29/25.
-//  FINAL: Simple, clean flow with clear button states
+//  FIXED: Proper completion flow, error handling, and rate limit display
 //
 
 import SwiftUI
@@ -66,6 +65,15 @@ struct OnboardingEmailStyleView: View {
                                         handleStyleSelection(option)
                                     }
                                 )
+                                .overlay(alignment: .topTrailing) {
+                                    // Show rate limit badge for unavailable custom style
+                                    if option.name.lowercased() == "custom",
+                                       !option.available,
+                                       let rateLimitInfo = option.rateLimitInfo {
+                                        RateLimitBadge(resetHours: rateLimitInfo.hoursUntilReset)
+                                            .padding(12)
+                                    }
+                                }
                             }
                         }
                         .padding(.horizontal, 24)
@@ -73,7 +81,9 @@ struct OnboardingEmailStyleView: View {
                         // Continue button (appears after selection)
                         if showContinueButton {
                             Button {
-                                completeOnboarding()
+                                Task {
+                                    await completeOnboarding()
+                                }
                             } label: {
                                 if onboarding.isLoading {
                                     ProgressView().tint(.white)
@@ -98,11 +108,18 @@ struct OnboardingEmailStyleView: View {
             .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showCustomStyleSetup) {
-            CustomStyleSetupSheet(onComplete: {
-                // After custom style completes successfully
-                selectedStyleName = "Custom"
-                showContinueButton = true
-            })
+            CustomStyleSetupSheet(
+                onComplete: {
+                    // After custom style completes successfully
+                    selectedStyleName = "Custom"
+                    showContinueButton = true
+                },
+                onCancel: {
+                    // User cancelled custom style setup - clear selection
+                    selectedStyleName = nil
+                    showContinueButton = false
+                }
+            )
         }
         .task {
             if onboarding.availableEmailStyles.isEmpty {
@@ -140,10 +157,44 @@ struct OnboardingEmailStyleView: View {
         }
     }
     
-    // MARK: - Complete Onboarding
-    private func completeOnboarding() {
-        onboarding.needsOnboarding = false
-        onboarding.step = .completed
+    // MARK: - Complete Onboarding (FIXED)
+    private func completeOnboarding() async {
+        // ✅ FIX: Refresh status from backend to get actual completion state
+        await onboarding.refreshStatus()
+        
+        // Backend will set needsOnboarding = false if onboarding is truly complete
+        // ContentView will observe this change and navigate to main app
+    }
+}
+
+// MARK: - Rate Limit Badge (Backend-Driven)
+struct RateLimitBadge: View {
+    let resetHours: Double
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "clock.fill")
+                .font(.caption2)
+            Text(displayText)
+                .font(.caption2)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(Color.orange))
+        .shadow(color: Color.orange.opacity(0.3), radius: 4, y: 2)
+    }
+    
+    private var displayText: String {
+        let hours = Int(ceil(resetHours))
+        if hours <= 0 {
+            return "Soon"
+        } else if hours < 1 {
+            return "< 1h"
+        } else {
+            return "\(hours)h"
+        }
     }
 }
 
@@ -259,6 +310,7 @@ struct EmailStyleOptionCard: View {
             .opacity(option.available ? 1 : 0.6)
         }
         .buttonStyle(.plain)
+        .disabled(!option.available)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
@@ -299,11 +351,12 @@ struct ErrorStateView: View {
     }
 }
 
-// MARK: - Custom Style Setup Sheet
+// MARK: - Custom Style Setup Sheet (FIXED)
 struct CustomStyleSetupSheet: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var onboarding: OnboardingManager
     let onComplete: () -> Void
+    let onCancel: () -> Void  // ✅ NEW: Cancel callback
     
     @State private var emailExamples = ["", "", ""]
     @State private var isProcessing = false
@@ -349,6 +402,11 @@ struct CustomStyleSetupSheet: View {
                                     showResult = false
                                     extractionResult = nil
                                     emailExamples = ["", "", ""]
+                                },
+                                onCancel: {
+                                    // ✅ NEW: Cancel and return to style selection
+                                    dismiss()
+                                    onCancel()
                                 }
                             )
                         } else {
@@ -367,9 +425,12 @@ struct CustomStyleSetupSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .foregroundColor(.white.opacity(0.85))
-                        .disabled(isProcessing)  // ← Disable cancel during AI processing
+                    Button("Cancel") {
+                        dismiss()
+                        onCancel()
+                    }
+                    .foregroundColor(.white.opacity(0.85))
+                    .disabled(isProcessing)
                 }
             }
         }
@@ -417,12 +478,10 @@ struct CustomStyleInputForm: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // 🔄 SHOW LOADING STATE WHILE PROCESSING
             if isProcessing {
                 Spacer()
                 
                 VStack(spacing: 24) {
-                    // Animated brain icon
                     Image(systemName: "brain.head.profile")
                         .font(.system(size: 64, weight: .semibold))
                         .foregroundColor(.blue)
@@ -431,7 +490,6 @@ struct CustomStyleInputForm: View {
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: animationPhase)
                         .onAppear { animationPhase = 1.0 }
                     
-                    // Progress spinner
                     ProgressView()
                         .scaleEffect(1.3)
                         .tint(.blue)
@@ -457,8 +515,6 @@ struct CustomStyleInputForm: View {
                 
                 Spacer()
             } else {
-                // 📝 SHOW WIZARD FORM WHEN NOT PROCESSING
-                // 📝 SHOW WIZARD FORM WHEN NOT PROCESSING
                 // Progress indicator
                 VStack(spacing: 12) {
                     HStack {
@@ -565,7 +621,6 @@ struct CustomStyleInputForm: View {
                     
                     Button(currentStep == 2 ? "Analyze My Style" : "Next") {
                         if currentStep == 2 {
-                            // Combine subject + body
                             for i in 0..<3 {
                                 emailExamples[i] = "Subject: \(emailSubjects[i])\n\n\(emailBodies[i])"
                             }
@@ -597,11 +652,12 @@ struct CustomStyleInputForm: View {
     }
 }
 
-// MARK: - Custom Style Result View
+// MARK: - Custom Style Result View (FIXED)
 struct CustomStyleResultView: View {
     let result: CustomEmailStyleResponse
     let onContinue: () -> Void
     let onRetry: () -> Void
+    let onCancel: () -> Void  // ✅ NEW: Cancel callback
     @EnvironmentObject var onboarding: OnboardingManager
     
     var body: some View {
@@ -635,12 +691,12 @@ struct CustomStyleResultView: View {
                 Button {
                     onContinue()
                 } label: {
-                    Label("Continue to App", systemImage: "arrow.right")
+                    Label("Use This Style", systemImage: "checkmark")
                 }
                 .appButtonStyle()
                 
             } else {
-                // ERROR STATE
+                // ERROR STATE (IMPROVED)
                 VStack(spacing: 16) {
                     Image(systemName: result.isRateLimitError ? "clock.fill" : "exclamationmark.triangle.fill")
                         .font(.system(size: 48))
@@ -656,8 +712,15 @@ struct CustomStyleResultView: View {
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
                     
+                    // ✅ NEW: Show when custom style will be available again
+                    if let rateLimitInfo = result.rateLimitInfo {
+                        Text("Resets at midnight UTC (\(formatResetTime(rateLimitInfo.resetTime)))")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
                     if result.isRateLimitError {
-                        Text("Try selecting Casual or Professional style instead, or come back tomorrow.")
+                        Text("You can select Casual or Professional style now, or try custom style again after reset.")
                             .font(.footnote)
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
@@ -665,20 +728,78 @@ struct CustomStyleResultView: View {
                 }
                 .appCardStyle()
                 
-                Button {
-                    onRetry()
-                } label: {
-                    Text(result.isRateLimitError ? "Choose Different Style" : "Try Different Examples")
+                // ✅ NEW: Better button options for errors
+                VStack(spacing: 12) {
+                    if result.isRateLimitError {
+                        // Rate limited: suggest choosing different style
+                        Button {
+                            onCancel()
+                        } label: {
+                            Text("Choose Different Style")
+                        }
+                        .appButtonStyle()
+                    } else {
+                        // Analysis failed: suggest trying different examples
+                        Button {
+                            onRetry()
+                        } label: {
+                            Text("Try Different Examples")
+                        }
+                        .appButtonStyle()
+                        
+                        // ✅ NEW: Always show cancel option
+                        Button {
+                            onCancel()
+                        } label: {
+                            Text("Back to Style Selection")
+                        }
+                        .font(.callout)
+                        .foregroundColor(.white.opacity(0.7))
+                    }
                 }
-                .appButtonStyle()
             }
         }
+    }
+    
+    // ✅ Helper to format reset time from backend
+    private func formatResetTime(_ isoString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        guard let date = formatter.date(from: isoString) else {
+            return "soon"
+        }
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        return timeFormatter.string(from: date)
     }
 }
 
 // MARK: - Previews
 
-#Preview("1. Choose Email Style") {
+#Preview("Custom Style - Success") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            
+            CustomStyleResultView(
+                result: CustomEmailStyleResponse(
+                    success: true,
+                    styleProfile: nil, // 👈 skip it here
+                    extractionGrade: "A",
+                    errorMessage: nil,
+                    rateLimitInfo: nil,
+                    nextStep: nil
+                ),
+                onContinue: {},
+                onRetry: {},
+                onCancel: {}
+            )
+            .environmentObject(OnboardingManager())
+            .padding()
+        }
+    }
+}
+#Preview("1. Choose Email Style - Base") {
     OnboardingEmailStyleView()
         .environmentObject({
             let mgr = OnboardingManager()
@@ -701,7 +822,7 @@ struct CustomStyleResultView: View {
                     name: "Custom",
                     description: "Personalized style learned from your emails",
                     example: EmailStyleExample(greeting: "Based on your writing", closing: "Matches your preferences", tone: "Uniquely yours"),
-                    available: true,
+                    available: true, // ✅ Available here to test normal state
                     rateLimitInfo: nil
                 )
             ]
@@ -709,53 +830,22 @@ struct CustomStyleResultView: View {
         }())
 }
 
-#Preview("2. Custom Style Wizard - Step 1") {
-    NavigationStack {
-        ZStack {
-            AppBackground().ignoresSafeArea()
-            CustomStyleInputForm(
-                emailExamples: .constant(["", "", ""]),
-                isProcessing: .constant(false),
-                onSubmit: {}
-            )
-            .padding()
-        }
-    }
-}
-
-#Preview("2b. AI Processing - Loading State 🔄") {
-    NavigationStack {
-        ZStack {
-            AppBackground().ignoresSafeArea()
-            CustomStyleInputForm(
-                emailExamples: .constant(["", "", ""]),
-                isProcessing: .constant(true),  // ← Shows loading state
-                onSubmit: {}
-            )
-            .padding()
-        }
-    }
-}
-
-#Preview("3. Custom Style - Success") {
+#Preview("2. Custom Style - Rate Limited") {
     NavigationStack {
         ZStack {
             AppBackground().ignoresSafeArea()
             CustomStyleResultView(
                 result: CustomEmailStyleResponse(
-                    success: true,
-                    styleProfile: StyleProfile(
-                        greeting: GreetingStyle(style: "casual", warmth: "high"),
-                        closing: ClosingStyle(styles: ["Thanks", "Cheers"], includesName: true),
-                        tone: ToneStyle(formality: 2, directness: 4, enthusiasm: 4, politeness: 3)
-                    ),
-                    extractionGrade: "A",
-                    errorMessage: nil,
-                    rateLimitInfo: nil,
-                    nextStep: "completed"
+                    success: false,
+                    styleProfile: nil,
+                    extractionGrade: nil,
+                    errorMessage: "You've reached your daily limit of 3 custom style extractions.",
+                    rateLimitInfo: RateLimitResponseInfo(used: 3, limit: 3, resetTime: "2025-10-02T00:00:00Z"),
+                    nextStep: nil
                 ),
                 onContinue: {},
-                onRetry: {}
+                onRetry: {},
+                onCancel: {}
             )
             .environmentObject(OnboardingManager())
             .padding()
@@ -763,7 +853,34 @@ struct CustomStyleResultView: View {
     }
 }
 
-#Preview("4. Custom Style - Error") {
+#Preview("3. Custom Style - Rate Limited") {
+    NavigationStack {
+        ZStack {
+            AppBackground().ignoresSafeArea()
+            CustomStyleResultView(
+                result: CustomEmailStyleResponse(
+                    success: false,
+                    styleProfile: nil,
+                    extractionGrade: nil,
+                    errorMessage: "You've reached your daily limit of 3 custom style extractions.",
+                    rateLimitInfo: RateLimitResponseInfo(
+                        used: 3,
+                        limit: 3,
+                        resetTime: "2025-10-02T00:00:00Z"
+                    ),
+                    nextStep: nil
+                ),
+                onContinue: {},
+                onRetry: {},
+                onCancel: {}
+            )
+            .environmentObject(OnboardingManager())
+            .padding()
+        }
+    }
+}
+
+#Preview("4. Custom Style - Analysis Failed") {
     NavigationStack {
         ZStack {
             AppBackground().ignoresSafeArea()
@@ -777,10 +894,20 @@ struct CustomStyleResultView: View {
                     nextStep: nil
                 ),
                 onContinue: {},
-                onRetry: {}
+                onRetry: {},
+                onCancel: {}
             )
             .environmentObject(OnboardingManager())
             .padding()
         }
     }
+}
+
+#Preview("5. Error State (Network Failure)") {
+    OnboardingEmailStyleView()
+        .environmentObject({
+            let mgr = OnboardingManager()
+            mgr.errorMessage = "Failed to connect to server. Please check your internet connection."
+            return mgr
+        }())
 }
