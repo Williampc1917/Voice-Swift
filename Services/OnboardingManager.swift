@@ -1,8 +1,8 @@
 //  OnboardingManager.swift
 //  voice-gmail-assistant
 //
-//  Created by William Pineda on 9/9/25.
-//  UPDATED: Added email style selection functionality
+//  FIXED: Proper handling of email style step completion
+//
 
 import Foundation
 import SwiftUI
@@ -12,7 +12,7 @@ enum OnboardingStep {
     case start
     case profile
     case gmail
-    case emailStyle  // ← NEW: Email style selection step
+    case emailStyle
     case completed
 }
 
@@ -22,7 +22,7 @@ extension OnboardingStep {
         case .start: self = .start
         case .profile: self = .profile
         case .gmail: self = .gmail
-        case .emailStyle: self = .emailStyle  // ← NEW
+        case .emailStyle: self = .emailStyle
         case .completed: self = .completed
         }
     }
@@ -43,7 +43,7 @@ final class OnboardingManager: ObservableObject {
     // OAuth completion state
     @Published var isProcessingOAuth = false
     
-    // ← NEW: Email Style-related properties
+    // Email Style-related properties
     @Published var emailStyleSelected: Bool = false
     @Published var availableEmailStyles: [EmailStyleOption] = []
     @Published var currentEmailStyle: String?
@@ -58,11 +58,13 @@ final class OnboardingManager: ObservableObject {
             print("🔍 [OnboardingManager] Refreshing onboarding status…")
             let token = try await self.supabaseSvc.currentAccessToken()
             let status = try await self.api.getOnboardingStatus(accessToken: token)
+            
+            // CRITICAL: Only set needsOnboarding based on backend status
             self.needsOnboarding = !status.onboardingCompleted
             self.step = OnboardingStep(from: status.step)
             self.gmailConnected = status.gmailConnected
             
-            // ← NEW: If we're on email_style step, load the options
+            // If we're on email_style step, load the options
             if self.step == .emailStyle {
                 try await self.loadEmailStyleOptionsInternal(token: token)
             }
@@ -111,7 +113,6 @@ final class OnboardingManager: ObservableObject {
     }
 
     // MARK: - Enhanced OAuth Completion (polling-friendly)
-    // ← UPDATED: Now handles go_to_email_style_step
     func completeGmailAuthIfPending() async {
         guard let state = UserDefaults.standard.string(forKey: "gmail_oauth_state") else {
             print("🔍 [OnboardingManager] No pending OAuth state")
@@ -160,20 +161,23 @@ final class OnboardingManager: ObservableObject {
             // Clear any previous errors
             self.errorMessage = nil
             
-            // ← NEW: Handle next step action using type-safe enum
+            // ✅ CRITICAL FIX: Handle next step action using type-safe enum
             switch response.nextStepAction {
             case .goToEmailStyle:
                 print("🔍 [OnboardingManager] Advancing to email style selection")
                 self.gmailConnected = true
                 self.step = .emailStyle
+                // ✅ DO NOT set needsOnboarding = false here!
+                // Let the backend control that via refreshStatus()
+                
                 // Load email style options immediately
                 await self.loadEmailStyleOptions()
                 
             case .completed:
-                print("🔍 [OnboardingManager] Onboarding completed")
+                print("🔍 [OnboardingManager] Onboarding completed by backend")
                 self.gmailConnected = true
-                self.needsOnboarding = false
-                self.step = .completed
+                // ✅ Refresh status to get the actual completed state from backend
+                await self.refreshStatus()
                 
             case .stayOnGmail:
                 print("🔍 [OnboardingManager] Staying on Gmail step (error)")
@@ -181,7 +185,7 @@ final class OnboardingManager: ObservableObject {
                 
             case .redirectToMainApp:
                 print("🔍 [OnboardingManager] Redirecting to main app")
-                self.needsOnboarding = false
+                await self.refreshStatus() // Get fresh status from backend
                 
             case .goToProfileStep:
                 print("🔍 [OnboardingManager] Going back to profile step")
@@ -269,7 +273,7 @@ final class OnboardingManager: ObservableObject {
         }
     }
 
-    // MARK: - ← NEW: Email Style Methods
+    // MARK: - Email Style Methods
     
     /// Load available email style options
     func loadEmailStyleOptions() async {
@@ -313,12 +317,12 @@ final class OnboardingManager: ObservableObject {
             self.emailStyleSelected = true
             self.canAdvanceFromEmailStyle = true
             
-            // Handle next step
+            // ✅ CRITICAL FIX: Don't set needsOnboarding here!
+            // Let refreshStatus() handle it after backend confirms completion
             if response.nextStep == "completed" {
-                print("🔍 [OnboardingManager] Can now complete onboarding")
-                // Mark onboarding as complete
-                self.needsOnboarding = false
-                self.step = .completed
+                print("🔍 [OnboardingManager] Backend says onboarding is complete, refreshing status")
+                // Refresh status to get the actual completion state from backend
+                await self.refreshStatus()
             }
         }
     }
@@ -347,11 +351,12 @@ final class OnboardingManager: ObservableObject {
                 self.emailStyleSelected = true
                 self.canAdvanceFromEmailStyle = true
                 
-                // Handle next step
+                // ✅ CRITICAL FIX: Don't set needsOnboarding here!
+                // Let refreshStatus() handle it after backend confirms completion
                 if response.nextStep == "completed" {
-                    print("🔍 [OnboardingManager] Can now complete onboarding")
-                    self.needsOnboarding = false
-                    self.step = .completed
+                    print("🔍 [OnboardingManager] Backend says onboarding is complete, refreshing status")
+                    // Refresh status to get the actual completion state from backend
+                    await self.refreshStatus()
                 }
             } else {
                 print("🔍 [OnboardingManager] Custom style creation failed: \(response.errorMessage ?? "unknown error")")
