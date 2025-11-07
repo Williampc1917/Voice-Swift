@@ -19,9 +19,7 @@ enum UITheme {
     static let surfaceElevated = Color(hex: "#14171F")
     static let stroke          = Color.white.opacity(0.15)
 
-    // Chat Bubbles — Option A (Frosted Coral vs Slate)
-    // AI: warm charcoal with coral edge
-    // User: cool slate with soft white edge
+    // Chat Bubbles
     static let bubbleUser = Color(hex: "#232A35")
     static let bubbleAI   = Color(hex: "#1A1719")
 
@@ -29,9 +27,9 @@ enum UITheme {
     static let brandCoral = Color(hex: "#EA8467")
     static let brandCoralLight = Color(hex: "#F39A83")
     static let brandNavy  = Color(hex: "#1E2230")
-    static let brandMint = Color.mint // Matches MainPage brand mint; replace with custom hex if needed
+    static let brandMint = Color.mint // use your custom mint if needed
 
-    // Accent (kept for compatibility; not used for AI ring anymore)
+    // Accent (kept for compatibility)
     static let accentBlue = Color(hex: "#4DA3FF")
 
     // Status
@@ -43,13 +41,12 @@ enum UITheme {
         colors: [UITheme.brandCoral, UITheme.brandCoralLight],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
-
     static let gradientNavy = LinearGradient(
         colors: [Color(hex: "#1E2230"), Color(hex: "#2C3144")],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
 
-    // Subtle strokes for bubbles (gives glassy edge)
+    // Subtle strokes for bubbles (glassy edge)
     static let bubbleStrokeUser = LinearGradient(
         colors: [Color.white.opacity(0.12), Color.white.opacity(0.02)],
         startPoint: .topLeading, endPoint: .bottomTrailing
@@ -87,6 +84,7 @@ struct VoiceChatView2: View {
     @State private var animationPhase = 0.0
     @State private var currentTranscript = ""
     @State private var showingDraftEmail: DraftEmail?
+    @State private var scrollTick = 0
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -115,34 +113,17 @@ struct VoiceChatView2: View {
 
     // MARK: Header
     private var headerSection: some View {
-        HStack {
-            HStack(spacing: 8) {
-                Button { dismiss() } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.backward")
-                            .font(.caption.weight(.semibold))
-                        Text("Home")
-                            .font(.caption.weight(.medium))
-                    }
-                    .foregroundColor(UITheme.textSecondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(UITheme.surfaceElevated)
-                            .overlay(Capsule().stroke(UITheme.stroke, lineWidth: 1))
-                    )
-                }
-                .buttonStyle(.plain)
-
+        HStack(spacing: 10) {
+            // Home pill
+            Button { dismiss() } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "timer")
-                        .font(.caption)
-                        .foregroundColor(UITheme.textSecondary.opacity(0.9))
-                    Text("\(voiceMinutesRemaining)m")
+                    Image(systemName: "chevron.backward")
+                        .font(.caption.weight(.semibold))
+                    Text("Home")
                         .font(.caption.weight(.medium))
-                        .foregroundColor(UITheme.textSecondary)
+                        .foregroundColor(.white)
                 }
+                .foregroundColor(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
@@ -151,24 +132,28 @@ struct VoiceChatView2: View {
                         .overlay(Capsule().stroke(UITheme.stroke, lineWidth: 1))
                 )
             }
+            .buttonStyle(.plain)
 
             Spacer()
 
-            Button { showingSettings = true } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.title3)
-                    .foregroundColor(UITheme.textSecondary)
-                    .padding(8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(UITheme.surfaceElevated)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(UITheme.stroke, lineWidth: 1)
-                            )
-                    )
+            // Timer chip
+            HStack(spacing: 6) {
+                Image(systemName: "timer")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                Text("\(voiceMinutesRemaining)m")
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(.white)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(UITheme.surfaceElevated)
+                    .overlay(Capsule().stroke(UITheme.stroke, lineWidth: 1))
+            )
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -185,6 +170,7 @@ struct VoiceChatView2: View {
                         }
                     }
 
+                    // Legacy transcript bubble (unused in scripted flow, harmless)
                     if isUserSpeaking && !currentTranscript.isEmpty {
                         ChatBubbleView2(message: ChatMessage2(
                             content: currentTranscript,
@@ -194,14 +180,28 @@ struct VoiceChatView2: View {
                         )) { _ in }
                     }
 
-                    Color.clear.frame(height: 200)
+                    // Bottom spacer used as a stable scroll anchor
+                    Color.clear.frame(height: 200).id("BOTTOM_ANCHOR")
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
             }
+            // When a new message is appended, jump to the bottom anchor
             .onChange(of: messages.count) { _ in
-                if let last = messages.last {
-                    withAnimation(.easeOut(duration: 0.5)) { proxy.scrollTo(last.id, anchor: .bottom) }
+                withAnimation(.easeOut(duration: 0.35)) {
+                    proxy.scrollTo("BOTTOM_ANCHOR", anchor: .bottom)
+                }
+            }
+            // While characters stream in, keep nudging the scroll to the bottom (non-animated to avoid jitter)
+            .onChange(of: scrollTick) { _ in
+                withAnimation(nil) {
+                    proxy.scrollTo("BOTTOM_ANCHOR", anchor: .bottom)
+                }
+            }
+            // Also keep pinned during live user transcription (non-animated)
+            .onChange(of: currentTranscript) { _ in
+                withAnimation(nil) {
+                    proxy.scrollTo("BOTTOM_ANCHOR", anchor: .bottom)
                 }
             }
         }
@@ -251,10 +251,12 @@ struct VoiceChatView2: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isUserSpeaking || isAISpeaking)
             }
 
-            Text(currentStatusText)
-                .font(.callout.weight(.medium))
-                .foregroundColor(UITheme.textSecondary)
-                .multilineTextAlignment(.center)
+            if isUserSpeaking || isAISpeaking {
+                Text(currentStatusText)
+                    .font(.callout.weight(.medium))
+                    .foregroundColor(UITheme.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
 
             if isAISpeaking {
                 Text("Start speaking to interrupt")
@@ -282,34 +284,82 @@ struct VoiceChatView2: View {
     }
 
     private var currentStatusText: String {
-        if isUserSpeaking { return "Listening to you..." }
-        if isAISpeaking   { return "AI is responding..." }
-        return "Ready to help"
+        if isUserSpeaking { return "Listening..." }
+        if isAISpeaking   { return "Speaking..." }
+        return ""
+    }
+
+    // Approximate IRL reading time for natural pauses (words per minute ~170)
+    private func estimatedReadTimeSeconds(for text: String, wpm: Double = 170.0) -> Double {
+        let words = text.split { $0.isWhitespace || $0.isNewline }.count
+        let seconds = (Double(words) / max(60.0, wpm)) * 60.0
+        // Clamp for UX: not too short, not too long
+        return min(max(seconds, 3.5), 14.0)
+    }
+
+    // =====================================================
+    // MARK: - Typewriter Helpers (voice-first transcription)
+    // =====================================================
+    /// Types a message character-by-character, keeping the correct ring state active.
+    private func typeMessage(_ fullText: String,
+                             isUser: Bool,
+                             startDelay: Double = 0.0,
+                             charDelay: Double = 0.055,
+                             completion: ((String) -> Void)? = nil) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay) {
+            // Activate the correct state (mint for user, coral for AI)
+            withAnimation(.easeInOut(duration: 0.25)) {
+                if isUser { isUserSpeaking = true } else { isAISpeaking = true }
+            }
+
+            // Create a streaming message and append
+            let streaming = ChatMessage2(content: "", isUser: isUser, timestamp: Date(), isTranscribing: true, hasDraftEmail: false)
+            messages.append(streaming)
+            let msgId = streaming.id
+
+            var rendered = ""
+            let chars = Array(fullText)
+            for i in 0..<chars.count {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * charDelay) {
+                    rendered.append(chars[i])
+                    if let idx = messages.firstIndex(where: { $0.id == msgId }) {
+                        messages[idx].content = rendered
+                    }
+                    // keep the chat pinned while typing (throttled to reduce jitter)
+                    if i % 2 == 0 { scrollTick &+= 1 }
+                    if i == chars.count - 1 {
+                        // Finish: clear transcribing + turn off ring
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                            if let idx = messages.firstIndex(where: { $0.id == msgId }) {
+                                messages[idx].isTranscribing = false
+                            }
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                if isUser { isUserSpeaking = false } else { isAISpeaking = false }
+                            }
+                            completion?(msgId)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // =====================================================
     // MARK: - Scripted Landing Demo Flow ("What's urgent?")
     // =====================================================
     private func runUrgentDemoFlow() {
-        // Reset for a clean demo
+        // Reset for a clean, slower conversational demo
         messages.removeAll()
         isUserSpeaking = false
         isAISpeaking = false
         currentTranscript = ""
 
-        // Step 2 — User: “What’s urgent?”
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.easeInOut(duration: 0.25)) { isUserSpeaking = true }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            messages.append(ChatMessage2(content: "What’s urgent?", isUser: true, timestamp: Date()))
-            withAnimation(.easeInOut(duration: 0.25)) { isUserSpeaking = false }
-        }
+        // Step 1 — User asks (typewriter + mint ring)
+        let userOpen = "What’s urgent?"
+        typeMessage(userOpen, isUser: true, startDelay: 0.4, charDelay: 0.055) { _ in
 
-        // Step 3 — AI: concise urgency summary
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            withAnimation(.easeInOut(duration: 0.25)) { isAISpeaking = true }
-            let summary = """
+            // Step 2 — AI summary (typewriter + coral ring)
+            let aiSummary = """
             Three things might need your attention, Emily:
             • Sarah Lopez — waiting on your reply for 2 days. She asked if you could confirm next steps on the partnership proposal.
             • Alex Wong — you promised a follow-up next week about the product roadmap discussion from Friday.
@@ -317,52 +367,36 @@ struct VoiceChatView2: View {
 
             Would you like to reply to Sarah first?
             """
-            messages.append(ChatMessage2(content: summary, isUser: false, timestamp: Date()))
-        }
+            self.typeMessage(aiSummary, isUser: false, startDelay: 0.6, charDelay: 0.045) { _ in
 
-        // Step 4 — User intent + closure
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.2) {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                isAISpeaking = false
-                isUserSpeaking = true
-            }
-            messages.append(ChatMessage2(
-                content: "Tell her I’m happy to move forward and I’ll share the final details tomorrow. Thank her for her patience.",
-                isUser: true,
-                timestamp: Date()
-            ))
-        }
+                // Step 3 — User intent (typewriter + mint ring)
+                let userIntent = "Tell her I’m happy to move forward and I’ll share the final details tomorrow. Thank her for her patience."
+                self.typeMessage(userIntent, isUser: true, startDelay: 0.6, charDelay: 0.055) { _ in
 
-        // Step 5 — AI drafts + shows sheet
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.6) {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                isUserSpeaking = false
-                isAISpeaking = true
-            }
-            messages.append(ChatMessage2(
-                content: "Got it — drafted a short, professional follow-up in your usual tone with Sarah.",
-                isUser: false,
-                timestamp: Date(),
-                hasDraftEmail: true
-            ))
+                    // Step 4 — AI acknowledges (typewriter + coral ring), then present draft sheet AFTER it finishes
+                    let aiDraftLine = "Got it — drafted a short, professional follow-up in your usual tone with Sarah."
+                    self.typeMessage(aiDraftLine, isUser: false, startDelay: 0.7, charDelay: 0.045) { msgId in
+                        if let idx = messages.firstIndex(where: { $0.id == msgId }) {
+                            messages[idx].hasDraftEmail = true
+                        }
 
-            // Present draft
-            let draft = createSarahDraft(userName: "Emily")
-            showingDraftEmail = draft
+                        // Present the draft sheet once that message is fully written
+                        let draft = createSarahDraft(userName: "Emily")
+                        // Small natural pause before the sheet slides up
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            showingDraftEmail = draft
 
-            // Emily reads a moment, then says "Send" → auto send + close
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                handleDraftAction(.send, for: draft)   // appends “Sent…” message
-                showingDraftEmail = nil                // closes the sheet
+                            // Keep sheet open long enough for a realistic skim/read
+                            let readDelay = max(0.5, estimatedReadTimeSeconds(for: draft.subject + " " + draft.body) - 3.0)
 
-                // Step 7 — Transition mention of Alex (stop here)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    messages.append(ChatMessage2(
-                        content: "Next up is Alex Wong — your follow-up for next week about the product roadmap.",
-                        isUser: false,
-                        timestamp: Date()
-                    ))
-                    withAnimation(.easeInOut(duration: 0.25)) { isAISpeaking = false }
+                            // After the read window, the user says "Send."
+                            self.typeMessage("Send.", isUser: true, startDelay: readDelay, charDelay: 0.06) { _ in
+                                handleDraftAction(.send, for: draft)
+                                showingDraftEmail = nil
+                                // The "Next up is Alex Wong..." message is now included in the confirmation for Sarah, so don't type it separately here.
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -401,6 +435,7 @@ Best,
 
     private func simulateUserSpeaking() {
         withAnimation(.easeInOut(duration: 0.3)) { isUserSpeaking = true }
+
         let userInputs = [
             "Draft an email to my team about the project update",
             "Check if I have any urgent messages",
@@ -410,12 +445,14 @@ Best,
             "Draft a follow-up email to our client"
         ]
         let text = userInputs.randomElement() ?? userInputs[0]
+
         currentTranscript = ""
         for (i, ch) in text.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
                 if isUserSpeaking { currentTranscript += String(ch) }
             }
         }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(text.count) * 0.06 + 1.0) {
             withAnimation(.easeInOut(duration: 0.3)) { isUserSpeaking = false }
             processUserMessage(text)
@@ -425,10 +462,13 @@ Best,
 
     private func processUserMessage(_ text: String) {
         messages.append(ChatMessage2(content: text, isUser: true, timestamp: Date()))
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             withAnimation(.easeInOut(duration: 0.3)) { isAISpeaking = true }
+
             let (response, hasDraft) = getAIResponse(for: text)
             messages.append(ChatMessage2(content: response, isUser: false, timestamp: Date(), hasDraftEmail: hasDraft))
+
             DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2...4)) {
                 withAnimation(.easeInOut(duration: 0.3)) { isAISpeaking = false }
                 if hasDraft {
@@ -514,15 +554,20 @@ Best regards,
     private func handleDraftAction(_ action: EmailDraftAction, for draft: DraftEmail) {
         switch action {
         case .send:
+            let confirmation: String
             if draft.to.lowercased().contains("sarah") {
-                messages.append(ChatMessage2(content: "Sent the reply to Sarah. I’ll remind you tomorrow to confirm she responded.", isUser: false, timestamp: Date()))
+                confirmation = "Sent the reply to Sarah. I’ll remind you tomorrow to confirm she responded."
+                let next = "Next up is Alex Wong — your follow-up for next week about the product roadmap."
+                let combined = confirmation + "\n\n" + next
+                typeMessage(combined, isUser: false, startDelay: 0.3, charDelay: 0.045)
             } else {
-                messages.append(ChatMessage2(content: "Email sent successfully to \(draft.to)!", isUser: false, timestamp: Date()))
+                confirmation = "Email sent successfully to \(draft.to)!"
+                typeMessage(confirmation, isUser: false, startDelay: 0.3, charDelay: 0.045)
             }
         case .save:
-            messages.append(ChatMessage2(content: "Saved your email draft.", isUser: false, timestamp: Date()))
+            typeMessage("Saved your email draft.", isUser: false, startDelay: 0.2, charDelay: 0.045)
         case .delete:
-            messages.append(ChatMessage2(content: "Email draft deleted.", isUser: false, timestamp: Date()))
+            typeMessage("Email draft deleted.", isUser: false, startDelay: 0.2, charDelay: 0.045)
         }
     }
 
@@ -539,7 +584,7 @@ Best regards,
 // =====================================================
 struct ChatMessage2: Identifiable {
     let id = UUID().uuidString
-    let content: String
+    var content: String
     let isUser: Bool
     let timestamp: Date
     var isTranscribing: Bool = false
@@ -719,7 +764,7 @@ struct EmailDraftView: View {
                                     .frame(maxWidth: .infinity)
                                     .foregroundColor(.white)
                                     .padding(.vertical, 14)
-                                    .background(UITheme.brandCoral)
+                                    .background(UITheme.brandCoral) // solid coral, no gradient
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                     .shadow(color: UITheme.brandCoral.opacity(0.3), radius: 12, y: 6)
                             }
@@ -811,7 +856,7 @@ struct ChatBackground: View {
                 endRadius: 520
             )
 
-            // Gentle vignette for readability (MainPage tone)
+            // Gentle vignette for readability
             LinearGradient(
                 colors: [.black.opacity(0.22), .clear, .black.opacity(0.15)],
                 startPoint: .top,
@@ -863,4 +908,3 @@ struct SettingsView1: View {
 // MARK: - Preview
 // =====================================================
 #Preview { VoiceChatView2() }
-

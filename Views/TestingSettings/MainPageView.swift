@@ -120,8 +120,15 @@ struct MainPageView: View {
                 Image(systemName: "gearshape.fill")
                     .font(.title3)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 2)
-                    .padding(.vertical, 6)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(UITheme.surfaceElevated)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(UITheme.stroke, lineWidth: 1)
+                            )
+                    )
             }
         }
     }
@@ -257,6 +264,23 @@ struct MainPageView: View {
 }
 
 // MARK: - Supporting Views
+
+// Shared nav pill style (matches VoiceChatView2 pills)
+private struct NavPillStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(UITheme.surfaceElevated)
+                    .overlay(Capsule().stroke(UITheme.stroke, lineWidth: 1))
+            )
+    }
+}
+private extension View {
+    func navPill() -> some View { modifier(NavPillStyle()) }
+}
 
 private struct MainPageSafeTopKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
