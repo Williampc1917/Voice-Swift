@@ -2,563 +2,256 @@
 //  MainPageView.swift
 //  voice-gmail-assistant
 //
-//  Mission Control - Enhanced with better UX patterns
+//  Mission Control — Claro AI color scheme (coral + navy)
 //
 
 import SwiftUI
 import Foundation
 
+// MARK: - Font helper (Silkscreen with safe fallback)
+#if canImport(UIKit)
+import UIKit
+#endif
+
+extension Font {
+    /// Attempts Silkscreen by PostScript name, with graceful fallback.
+    static func silkscreen(_ size: CGFloat, relativeTo style: Font.TextStyle = .title3) -> Font {
+        #if canImport(UIKit)
+        if UIFont(name: "Silkscreen-Regular", size: size) != nil {
+            return .custom("Silkscreen-Regular", size: size, relativeTo: style)
+        }
+        if UIFont(name: "Silkscreen", size: size) != nil {
+            return .custom("Silkscreen", size: size, relativeTo: style)
+        }
+        #endif
+        return .system(size: size, weight: .semibold, design: .monospaced)
+    }
+}
+
+// MARK: - Brand colors (Display-P3 for vibrancy)
+private enum Brand {
+    static let coral = Color(.displayP3, red: 224/255, green: 122/255, blue: 95/255)       // #E07A5F
+    static let navy  = Color(.displayP3, red:  61/255, green:  64/255, blue: 91/255)       // #3D405B
+    static let mint  = Color(.displayP3, red: 110/255, green: 198/255, blue: 166/255)
+
+    // Alerts
+    static let alertRed    = Color(.displayP3, red: 245/255, green:  34/255, blue:  45/255) // #F5222D
+    static let alertYellow = Color(.displayP3, red: 250/255, green: 173/255, blue:  20/255) // #FAAD14
+    static let alertBlue   = Color(.displayP3, red:  24/255, green: 144/255, blue: 255/255) // #1890FF
+
+    // Severity (muted, for Smart Alerts)
+    static let sevDanger  = Color(.displayP3, red: 161/255, green:  75/255, blue:  75/255) // #A14B4B
+    static let sevWarning = Color(.displayP3, red: 142/255, green: 111/255, blue:  62/255) // #8E6F3E
+    static let sevInfo    = Color(.displayP3, red:  76/255, green: 118/255, blue: 184/255) // #4C76B8
+
+    // Background (dark slate, wide-gamut)
+    static let bgTop     = Color(.displayP3, red: 11/255, green: 13/255, blue: 17/255)   // #0B0D11
+    static let bgMid     = Color(.displayP3, red: 16/255, green: 20/255, blue: 26/255)   // #10141A
+    static let bgBottom  = Color(.displayP3, red: 23/255, green: 27/255, blue: 34/255)   // #171B22
+    static let coralGlow = Color(.displayP3, red: 234/255, green: 132/255, blue: 103/255) // #EA8467
+}
+
 struct MainPageView: View {
     @State private var showingSettings = false
     @State private var showingVoiceChat = false
     @State private var safeTop: CGFloat = 0
-    
-    // App state - PRIVACY: Only metadata, no email content parsing
+
+    // Minimal app state
     @State private var voiceMinutesRemaining = 23
-    @State private var unreadEmails = 7
-    @State private var starredEmails = 2
-    
-    // Gmail's own categories (metadata only)
-    @State private var primaryEmails = 3
-    @State private var socialEmails = 2
-    @State private var promotionsEmails = 2
-    
-    // Priority hints (metadata only)
-    @State private var vipEmails = 1
-    @State private var ongoingThreads = 2
-    
-    @State private var todaysMeetings = 3
-    @State private var nextMeetingTime = "9:00 AM"
-    @State private var nextMeetingTitle = "Team Standup"
     @State private var gmailConnected = true
     @State private var calendarConnected = true
-    @State private var draftingStyle = "Professional"
-    
-    // Last session data
-    @State private var lastSessionEmailsHandled = 5
-    @State private var lastSessionMeetingsScheduled = 2
-    @State private var lastSessionTime = "2h ago"
-    
-    // UI state
-    @State private var recentActivityExpanded = false
-    @State private var voiceButtonScale: CGFloat = 1.0
-    @State private var glowOpacity: Double = 0.3
-    
+    @State private var pulse = false
+
     var body: some View {
         NavigationStack {
             ZStack {
-                AppBackground()
-                    .ignoresSafeArea(.all)
-                
+                MainPageBackgroundView().ignoresSafeArea()
+
                 GeometryReader { proxy in
                     Color.clear.preference(key: MainPageSafeTopKey.self, value: proxy.safeAreaInsets.top)
                 }
                 .frame(height: 0)
                 .onPreferenceChange(MainPageSafeTopKey.self) { safeTop = $0 }
-                
+
                 ScrollView {
                     VStack(spacing: 0) {
-                        // MARK: Header
                         headerSection
                             .padding(.horizontal, 24)
-                            .padding(.top, safeTop + 8)
-                        
-                        // MARK: Last Session Summary
-                        if lastSessionEmailsHandled > 0 {
-                            lastSessionSection
-                                .padding(.horizontal, 24)
-                                .padding(.top, 24)
-                        }
-                        
-                        // MARK: Hero Voice Button
+                            .padding(.top, safeTop + 4)
+
                         heroVoiceSection
-                            .padding(.top, 32)
-                        
-                        // MARK: Quick Start Options
+                            .padding(.top, 8)
+
                         quickActionsSection
                             .padding(.horizontal, 24)
-                            .padding(.top, 24)
-                        
-                        // MARK: What's Waiting (Metadata Only)
-                        whatsWaitingSection
+                            .padding(.top, 8)
+
+                        smartAlertsSection
                             .padding(.horizontal, 24)
-                            .padding(.top, 32)
-                        
-                        // MARK: Recent Activity
-                        recentActivitySection
-                            .padding(.horizontal, 24)
-                            .padding(.top, 32)
-                        
-                        Color.clear.frame(height: 60)
+                            .padding(.top, 12)
+
+                        Color.clear.frame(height: 40)
                     }
                 }
                 .scrollIndicators(.hidden)
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-            }
-            .fullScreenCover(isPresented: $showingVoiceChat) {
-                VoiceChatView2()
-            }
-            .onAppear {
-                startGlowAnimation()
-            }
+            .sheet(isPresented: $showingSettings) { SettingsView() }
+            .fullScreenCover(isPresented: $showingVoiceChat) { VoiceChatView2() }
+            .onAppear { startAnimations() }
         }
     }
-    
-    // MARK: - Header Section
+
+    // MARK: Header
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(currentGreeting)
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
-                
-                Text("William")
-                    .font(.system(size: 28, weight: .bold))
+            HStack(spacing: 4) {
+                Text("CLARO")
+                    .font(.silkscreen(20))
+                    .foregroundColor(Brand.coral)
+                    .tracking(1.0)
+                Text("AI")
+                    .font(.silkscreen(20))
                     .foregroundColor(.white)
+                    .tracking(1.0)
             }
-            
             Spacer()
-            
-            // Date and Settings
-            HStack(spacing: 16) {
-                Text(formattedDate)
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.6))
-                
-                Button {
-                    showingSettings = true
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.title3)
-                        .foregroundColor(.white.opacity(0.7))
-                }
+            Button { showingSettings = true } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 6)
             }
         }
     }
-    
-    // MARK: - Last Session Summary
-    private var lastSessionSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
-                .font(.title3)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Last session (\(lastSessionTime))")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
-                
-                Text("\(lastSessionEmailsHandled) emails handled • \(lastSessionMeetingsScheduled) meetings scheduled")
-                    .font(.callout.weight(.medium))
-                    .foregroundColor(.white)
-            }
-            
-            Spacer()
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.green.opacity(0.15))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-    
-    // MARK: - Hero Voice Section
+
+    // MARK: Hero Voice Button (no shadows; circular halo to avoid square glow)
     private var heroVoiceSection: some View {
-        VStack(spacing: 20) {
-            // Voice Button
+        VStack(spacing: 14) {
             Button {
                 if voiceMinutesRemaining > 0 && gmailConnected {
                     showingVoiceChat = true
                 }
             } label: {
                 ZStack {
-                    // Glow rings
+                    // Circular halo rendered as a blurred circle behind the button
                     Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.blue.opacity(glowOpacity),
-                                    Color.blue.opacity(0)
-                                ],
-                                center: .center,
-                                startRadius: 60,
-                                endRadius: 100
-                            )
-                        )
-                        .frame(width: 200, height: 200)
-                    
-                    // Main button
+                        .fill(Brand.coral.opacity(0.28))
+                        .frame(width: 190, height: 190)
+                        .blur(radius: 30) // stays circular (no rectangular shadow artifacts)
+
+                    // Solid coral button
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.blue.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 140, height: 140)
-                        .shadow(color: Color.blue.opacity(0.4), radius: 20, y: 8)
+                        .fill(Brand.coral)
+                        .frame(width: 146, height: 146)
                         .overlay(
-                            Circle()
-                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 2)
+                            Circle().stroke(Color.white.opacity(0.12), lineWidth: 1)
                         )
-                        .scaleEffect(voiceButtonScale)
-                    
-                    // Icon
+                        .scaleEffect(pulse ? 1.06 : 1.0)
+
                     Image(systemName: "waveform")
-                        .font(.system(size: 44, weight: .medium))
+                        .font(.system(size: 46, weight: .semibold))
                         .foregroundColor(.white)
+                        .scaleEffect(pulse ? 1.06 : 1.0)
                 }
+                // No .drawingGroup, no blend modes, no outer shadows (prevents wash-out & square glow)
             }
             .buttonStyle(.plain)
             .disabled(voiceMinutesRemaining <= 0 || !gmailConnected)
             .opacity(voiceMinutesRemaining <= 0 || !gmailConnected ? 0.5 : 1.0)
-            
-            // Button label - Simple and inviting
-            VStack(spacing: 8) {
-                Text("Let's Begin")
-                    .font(.title2.weight(.semibold))
-                    .foregroundColor(.white)
-                
-                // Privacy badge
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.caption)
-                        .foregroundColor(.green.opacity(0.7))
-                    
-                    Text("Privacy-first • Voice ready")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                
-                // Error states only
-                if !gmailConnected {
-                    Text("Connect Gmail to get started")
-                        .font(.subheadline)
-                        .foregroundColor(.orange.opacity(0.9))
-                        .padding(.top, 4)
-                } else if voiceMinutesRemaining <= 0 {
-                    Text("No voice minutes remaining")
-                        .font(.subheadline)
-                        .foregroundColor(.orange.opacity(0.9))
-                        .padding(.top, 4)
-                }
+
+            Text("Start Session")
+                .font(.system(.title2, design: .rounded))
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .shadow(color: .white.opacity(pulse ? 0.24 : 0.10), radius: 10, y: 1)
+                .scaleEffect(pulse ? 1.04 : 1.0)
+                .padding(.top, -20)
+
+            if !gmailConnected {
+                Text("Connect Gmail to get started")
+                    .font(.subheadline)
+                    .foregroundColor(Brand.coral)
+                    .padding(.top, 4)
+            } else if voiceMinutesRemaining <= 0 {
+                Text("No voice minutes remaining")
+                    .font(.subheadline)
+                    .foregroundColor(Brand.coral)
+                    .padding(.top, 4)
             }
         }
         .padding(.horizontal, 24)
     }
-    
-    // MARK: - Quick Start Options
+
+    // MARK: Quick Actions
     private var quickActionsSection: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Or start with:")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
-                Spacer()
-            }
-            
-            HStack(spacing: 12) {
-                QuickStartButton(
-                    icon: "exclamationmark.circle.fill",
-                    title: "What's urgent?",
-                    color: .red
-                ) {
-                    // Start voice with urgent filter
-                    if voiceMinutesRemaining > 0 && gmailConnected {
-                        showingVoiceChat = true
-                    }
-                }
-                
-                QuickStartButton(
-                    icon: "calendar.circle.fill",
-                    title: "What's my day?",
-                    color: .blue
-                ) {
-                    // Start voice with calendar focus
-                    if voiceMinutesRemaining > 0 && gmailConnected {
-                        showingVoiceChat = true
-                    }
-                }
-                
-                QuickStartButton(
-                    icon: "sparkles",
-                    title: "something",
-                    color: .purple
-                ) {
-                    // Start voice with summary mode
-                    if voiceMinutesRemaining > 0 && gmailConnected {
-                        showingVoiceChat = true
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - What's Waiting Section (Privacy-Safe Metadata)
-    private var whatsWaitingSection: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("What's Waiting")
+                Text("Quick actions")
                     .font(.headline)
                     .foregroundColor(.white)
                 Spacer()
             }
-            
-            VStack(spacing: 16) {
-                // Email Summary - Using Gmail's Categories + Priority Hints
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "envelope.fill")
-                            .foregroundColor(.blue)
-                            .font(.title3)
-                        
-                        Text("\(unreadEmails) unread emails")
-                            .font(.callout.weight(.semibold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                    }
-                    
-                    // Priority hints (metadata only)
-                    if vipEmails > 0 || ongoingThreads > 0 {
-                        VStack(spacing: 8) {
-                            if vipEmails > 0 {
-                                CategoryRow(
-                                    icon: "star.circle.fill",
-                                    color: .yellow,
-                                    text: "\(vipEmails) from VIP contacts"
-                                )
-                            }
-                            
-                            if ongoingThreads > 0 {
-                                CategoryRow(
-                                    icon: "arrow.left.arrow.right.circle.fill",
-                                    color: .orange,
-                                    text: "\(ongoingThreads) ongoing conversations"
-                                )
-                            }
-                        }
-                        .padding(.leading, 8)
-                    }
-                    
-                    // Gmail's own categories (no content parsing)
-                    if unreadEmails > 0 {
-                        VStack(spacing: 8) {
-                            if primaryEmails > 0 {
-                                CategoryRow(
-                                    icon: "person.circle.fill",
-                                    color: .blue,
-                                    text: "\(primaryEmails) in Primary"
-                                )
-                            }
-                            
-                            if socialEmails > 0 {
-                                CategoryRow(
-                                    icon: "person.2.fill",
-                                    color: .purple,
-                                    text: "\(socialEmails) in Social"
-                                )
-                            }
-                            
-                            if promotionsEmails > 0 {
-                                CategoryRow(
-                                    icon: "tag.fill",
-                                    color: .green,
-                                    text: "\(promotionsEmails) in Promotions"
-                                )
-                            }
-                        }
-                        .padding(.leading, 8)
-                    }
-                    
-                    // Starred emails (metadata only)
-                    if starredEmails > 0 {
-                        HStack(spacing: 8) {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                                .font(.caption)
-                            
-                            Text("\(starredEmails) starred messages")
-                                .font(.callout)
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-                        .padding(.leading, 8)
-                        .padding(.top, 4)
-                    }
-                }
-                
-                Divider()
-                    .background(Color.white.opacity(0.1))
-                
-                // Calendar Summary
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.green)
-                            .font(.title3)
-                        
-                        Text("\(todaysMeetings) meetings today")
-                            .font(.callout.weight(.semibold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                    }
-                    
-                    if todaysMeetings > 0 {
-                        HStack(spacing: 8) {
-                            Image(systemName: "clock.fill")
-                                .foregroundColor(.green.opacity(0.8))
-                                .font(.caption)
-                            
-                            Text("Next: \(nextMeetingTitle) (\(nextMeetingTime))")
-                                .font(.callout)
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-                        .padding(.leading, 8)
-                    }
-                }
-                
-                // Voice Minutes - Only show if running low
-                if voiceMinutesRemaining <= 15 {
-                    Divider()
-                        .background(Color.white.opacity(0.1))
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                            .font(.title3)
-                        
-                        Text("\(voiceMinutesRemaining) voice minutes remaining")
-                            .font(.callout.weight(.semibold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Button("Upgrade") {
-                            showingSettings = true
-                        }
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                    }
-                }
-            }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-            )
-        }
-    }
-    
-    // MARK: - Recent Activity Section
-    private var recentActivitySection: some View {
-        VStack(spacing: 16) {
-            Button {
-                withAnimation(.spring(response: 0.3)) {
-                    recentActivityExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Text("Recent Activity")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Image(systemName: recentActivityExpanded ? "chevron.up" : "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-            }
-            .buttonStyle(.plain)
-            
-            if recentActivityExpanded {
-                VStack(spacing: 12) {
-                    ActivityItem(
-                        icon: "paperplane.fill",
-                        iconColor: .green,
-                        title: "Sent email to Marketing Team",
-                        subtitle: "Via voice session",
-                        time: "5m ago"
-                    )
-                    
-                    ActivityItem(
-                        icon: "calendar.badge.plus",
-                        iconColor: .blue,
-                        title: "Scheduled meeting with Sarah",
-                        subtitle: "Tomorrow at 2:00 PM",
-                        time: "12m ago"
-                    )
-                    
-                    ActivityItem(
-                        icon: "archivebox.fill",
-                        iconColor: .orange,
-                        title: "Archived 3 emails",
-                        subtitle: "Promotional messages",
-                        time: "1h ago"
-                    )
-                    
-                    ActivityItem(
-                        icon: "doc.text.fill",
-                        iconColor: .purple,
-                        title: "Drafted reply",
-                        subtitle: "Saved for review",
-                        time: "2h ago"
-                    )
-                }
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
+            HStack(spacing: 12) {
+                QuickStartButton(
+                    icon: "exclamationmark.circle.fill",
+                    title: "What's urgent?",
+                    color: Brand.coral
+                ) { startVoiceIfAllowed() }
+
+                QuickStartButton(
+                    icon: "calendar.circle.fill",
+                    title: "Today’s briefing",
+                    color: Brand.mint
+                ) { startVoiceIfAllowed() }
             }
         }
     }
-    
-    // MARK: - Helper Properties
-    private var currentGreeting: String {
-        let hour = NSCalendar.current.component(.hour, from: Date())
-        switch hour {
-        case 0..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        default: return "Good evening"
+
+    // MARK: Smart Alerts
+    private var smartAlertsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Smart Alerts")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            VStack(spacing: 12) {
+                SmartAlertCard(
+                    color: Brand.sevWarning,
+                    name: "Alex Wong",
+                    message: "Promised follow-up \"next week\"",
+                    action: "Send update"
+                ) { startVoiceIfAllowed() }
+
+                SmartAlertCard(
+                    color: Brand.sevDanger,
+                    name: "Sarah Lopez",
+                    message: "Waiting on your reply for 2 days",
+                    action: "Draft response"
+                ) { startVoiceIfAllowed() }
+
+                SmartAlertCard(
+                    color: Brand.sevInfo,
+                    name: "Jennifer Miller",
+                    message: "Budget review in 3 hours",
+                    action: "Pricing & timeline recap"
+                ) { startVoiceIfAllowed() }
+            }
         }
     }
-    
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE, MMM d"
-        return formatter.string(from: Date())
-    }
-    
-    // MARK: - Animations
-    private func startGlowAnimation() {
-        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-            glowOpacity = 0.6
+
+    // MARK: Animations
+    private func startAnimations() {
+        withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+            pulse.toggle()
         }
-        
-        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-            voiceButtonScale = 1.05
+    }
+
+    // MARK: Helpers
+    private func startVoiceIfAllowed() {
+        if voiceMinutesRemaining > 0 && gmailConnected {
+            showingVoiceChat = true
         }
     }
 }
@@ -572,22 +265,22 @@ private struct MainPageSafeTopKey: PreferenceKey {
     }
 }
 
+// Quick action button (icon over title)
 struct QuickStartButton: View {
     let icon: String
     let title: String
     let color: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .foregroundColor(color)
                     .font(.system(size: 24, weight: .medium))
-                
                 Text(title)
                     .font(.caption.weight(.medium))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -595,72 +288,104 @@ struct QuickStartButton: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(Color(.displayP3, red: 16/255, green: 20/255, blue: 26/255))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(color.opacity(0.3), lineWidth: 1)
+                            .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
                     )
+                    .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 8)
             )
         }
         .buttonStyle(.plain)
     }
 }
 
-struct CategoryRow: View {
-    let icon: String
+// Smart Alert Card (no vertical bars; crisp)
+struct SmartAlertCard: View {
     let color: Color
-    let text: String
-    
+    let name: String
+    let message: String
+    let action: String
+    let onTap: () -> Void
+
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.caption)
-                .frame(width: 16)
-            
-            Text(text)
-                .font(.callout)
-                .foregroundColor(.white.opacity(0.85))
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 7) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 8, height: 8)
+                        Text(name)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    Text(message)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(action)
+                        .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(0.08))
+                            )
+                }
+                .padding(.vertical, 2)
+
+                Spacer(minLength: 12)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(.vertical, 15)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.displayP3, red: 16/255, green: 20/255, blue: 26/255))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 8)
+            )
         }
+        .buttonStyle(.plain)
     }
 }
 
-struct ActivityItem: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let subtitle: String?
-    let time: String
-    
+/// MainPageBackgroundView — reduced global darkening to avoid washing colors
+private struct MainPageBackgroundView: View {
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.2))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: icon)
-                    .foregroundColor(iconColor)
-                    .font(.system(size: 14, weight: .semibold))
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.callout)
-                    .foregroundColor(.white)
-                
-                if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-            }
-            
-            Spacer()
-            
-            Text(time)
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.5))
+        ZStack {
+            LinearGradient(
+                colors: [Brand.bgTop, Brand.bgMid, Brand.bgBottom],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            // Keep brand mood lights extremely subtle so the hero stays bright
+            RadialGradient(
+                gradient: Gradient(stops: [
+                    .init(color: Brand.coralGlow.opacity(0.03), location: 0.0),
+                    .init(color: .clear, location: 1.0)
+                ]),
+                center: .center,
+                startRadius: 0,
+                endRadius: 520
+            )
+
+            // Edge vignette (no multiply to avoid global desaturation)
+            LinearGradient(
+                colors: [.black.opacity(0.18), .clear, .black.opacity(0.20)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .allowsHitTesting(false)
         }
     }
 }
